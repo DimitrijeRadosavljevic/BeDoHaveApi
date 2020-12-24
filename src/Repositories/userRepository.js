@@ -1,5 +1,7 @@
-const neo4j = require('neo4j-driver');
-const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("neo4j", "gogi"));
+//const neo4j = require('neo4j-driver');
+//const driver = neo4j.driver("bolt://localhost:7687", neo4j.auth.basic("neo4j", "gogi"));
+
+import { driver } from "../utils/db"
 
 
 const personName = 'Slovca354Osoba2';
@@ -30,7 +32,7 @@ exports.createPerson = async () => {
 
 //exports.createPerson354 = 
 exports.createPerson354 = async (personName354) =>  {
-    const session = driver.session();
+    const session = driver.session()
     const result = await session.run(
         'CREATE (a:Person {name: $name}) RETURN a',
         { name: personName354 }

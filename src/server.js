@@ -1,7 +1,9 @@
 import express from 'express'
 import {json, urlencoded} from 'body-parser'
 import morgan from 'morgan'
-import * as userRepository from "./Repositories/userRepository"
+import { userRouter } from './resources/user/user.router'
+//import * as userRepository from "./Repositories/userRepository"
+import * as userRepository from "./resources/user/user.repository" 
 const port = 3000;
 
 export const app = express()
@@ -24,13 +26,16 @@ app.post('/api/postSlovca', (req, res) => {
   res.status(300).send( { data: req.body})
 })
 
-app.post('/api/postPerson', async function (req, res) {
+// app.post('/api/postPerson', async (req, res) => {
 
-  const data =  await userRepository.createPerson354(req.body.name);
-  res.status(200).send( { data: "Person iz created" , person: data });
-  //return 700000;
+//   const data =  await userRepository.postUser(req.body);
+//   res.status(200).send( { data: "Person iz created" , person: data });
+//   //return 700000;
 
-})
+// })
+
+//Use user router
+app.use('/api', userRouter);
 
 
 export const start = () => {
