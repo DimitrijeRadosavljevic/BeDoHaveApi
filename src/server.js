@@ -4,6 +4,7 @@ import morgan from 'morgan'
 import { userRouter } from './resources/user/user.router'
 //import * as userRepository from "./Repositories/userRepository"
 import * as userRepository from "./resources/user/user.repository" 
+import { themeRouter } from './resources/theme/theme.router'
 const port = 3000;
 
 export const app = express()
@@ -18,13 +19,18 @@ app.use(urlencoded({extended: true}))
 // Logging middleware, example POST /next 200 5.868 ms - 19
 app.use(morgan('dev'))
 
+
+
+
 app.get('/api/getSlovca', (req, res) => {
   res.status(200).send({ slovca: "Slovca" });
 })
 
+
 app.post('/api/postSlovca', (req, res) => {
   res.status(300).send( { data: req.body})
 })
+
 
 // app.post('/api/postPerson', async (req, res) => {
 
@@ -36,6 +42,9 @@ app.post('/api/postSlovca', (req, res) => {
 
 //Use user router
 app.use('/api', userRouter);
+
+//Use theme router
+app.use('/api/themes', themeRouter);
 
 
 export const start = () => {
