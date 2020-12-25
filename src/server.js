@@ -6,6 +6,7 @@ import { userRouter } from './resources/user/user.router'
 import * as userRepository from "./resources/user/user.repository" 
 import { themeRouter } from './resources/theme/theme.router'
 import { login, protect } from './utils/auth';
+import authRouter from "./utils/auth/auth.router"
 import cors from 'cors'
 
 const port = 3000;
@@ -40,7 +41,6 @@ app.post('/api/postSlovca', (req, res) => {
 
 app.post('/login', login);
 
-app.use('/api', protect)
 app.use('/api', userRouter);
 
 //Use theme router
