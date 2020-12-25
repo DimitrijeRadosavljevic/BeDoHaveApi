@@ -44,3 +44,20 @@ exports.getUser = async (id) => {
 
 }
 
+exports.getUserByEmail = async (email) => {
+
+  const session = driver.session()
+  const result = await session.run(
+    'MATCH (a) where a.email = $email RETURN a,ID(a)',
+    {
+      email: email.toString()
+    }
+  )
+
+  const singleRecord = result.records[0]
+  const user = singleRecord.get(0)
+  const userId = singleRecord.get(1).low;
+  await session.close();
+  return { user: user.properties, id: userId }
+}
+
