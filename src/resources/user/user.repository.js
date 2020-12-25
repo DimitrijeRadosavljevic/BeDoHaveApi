@@ -17,7 +17,6 @@ exports.postUser = async (user) =>  {
      const singleRecord = result.records[0]
      const node = singleRecord.get(0)
      const nodeId = singleRecord.get(1).low;
-     //console.log(node.identity);
 
      await session.close();
      return { user: node.properties, id: nodeId }
@@ -37,11 +36,8 @@ exports.getUser = async (id) => {
     const singleRecord = result.records[0]
     const node = singleRecord.get(0)
     const nodeId = singleRecord.get(1).low;
-    //console.log(nodeId);
     await session.close();
-    //console.log(singleRecord);
-    return { user: node.properties, id: nodeId }
-
+    return { ...node.properties, id: nodeId }
 }
 
 exports.getUserByEmail = async (email) => {
@@ -58,6 +54,6 @@ exports.getUserByEmail = async (email) => {
   const user = singleRecord.get(0)
   const userId = singleRecord.get(1).low;
   await session.close();
-  return { user: user.properties, id: userId }
+  return { ...user.properties, id: userId }
 }
 

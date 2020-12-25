@@ -2,7 +2,7 @@ import express from 'express'
 import {json, urlencoded} from 'body-parser'
 import morgan from 'morgan'
 import { userRouter } from './resources/user/user.router'
-import { login, protect } from './utils/auth';
+import authRouter from "./utils/auth/auth.router"
 import cors from 'cors'
 
 const port = 3000;
@@ -21,9 +21,8 @@ app.use(urlencoded({extended: true}))
 app.use(morgan('dev'))
 
 
-app.post('/login', login);
+app.use('/', authRouter);
 
-app.use('/api', protect)
 app.use('/api', userRouter);
 
 
