@@ -23,6 +23,20 @@ const login = async (req, res) => {
 }
 
 const register = async (req, res) => {
+
+  const email = req.body.email
+  const user = await userRepository.getUserByEmail(email);
+
+  if(user == null) {
+
+    console.log("Dodat je user");
+    const registeredUser = await userRepository.postUser(req.body);
+    res.status(201).send(registeredUser);
+  }
+  else {
+    console.log("Nije dodat user")
+    res.status(400).send("Username already used");
+  }
 }
 
 const protect = async (req, res, next) => {
