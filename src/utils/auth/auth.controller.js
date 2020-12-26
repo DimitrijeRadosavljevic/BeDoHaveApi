@@ -1,12 +1,13 @@
 import * as userRepository from "../../resources/user/user.repository";
 import {newToken, verifyToken, checkPassword} from "./auth.service";
+import { getSession } from "../db";
 
 const login = async (req, res) => {
   // TODO(login 1) add validation logic
 
   const email = req.body.email
-  const user = await userRepository.getUserByEmail(email)
-
+  const user = await userRepository.getUserByEmail(getSession(req), email)
+  console.log('LOGIN USER:', user)
   if (!user) return res.status(401).end()
 
   // TODO(login 2) uncomment when register is added
@@ -39,7 +40,7 @@ const protect = async (req, res, next) => {
     return res.status(401).end()
   }
 
-  const user = await userRepository.getUser(payload.id);
+  const user = await userRepository.getUser(getSession(req), payload.id);
   req.user = user
   next()
 }

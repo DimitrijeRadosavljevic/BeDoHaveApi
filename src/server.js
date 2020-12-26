@@ -2,10 +2,8 @@ import express from 'express'
 import {json, urlencoded} from 'body-parser'
 import morgan from 'morgan'
 import { userRouter } from './resources/user/user.router'
-//import * as userRepository from "./Repositories/userRepository"
-import * as userRepository from "./resources/user/user.repository" 
 import { themeRouter } from './resources/theme/theme.router'
-import { login, protect } from './utils/auth';
+import { essayRouter } from './resources/essay/essay.router'
 import authRouter from "./utils/auth/auth.router"
 import cors from 'cors'
 
@@ -26,25 +24,12 @@ app.use(morgan('dev'))
 
 
 
-
-app.get('/api/getSlovca', (req, res) => {
-  res.status(200).send({ slovca: "Slovca" });
-})
-
-
-app.post('/api/postSlovca', (req, res) => {
-  res.status(300).send( { data: req.body})
-})
-
-
-// app.post('/api/postPerson', async (req, res) => {
-
-app.post('/login', login);
-
+app.use('/', authRouter)
 app.use('/api', userRouter);
 
 //Use theme router
 app.use('/api/themes', themeRouter);
+app.use('/api', essayRouter);
 
 
 

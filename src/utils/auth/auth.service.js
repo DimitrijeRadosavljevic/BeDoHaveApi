@@ -14,8 +14,6 @@ export const verifyToken = async token => {
 }
 
 export const checkPassword = async (password, passwordHash) => {
-
   const result = await bcrypt.compare(password, passwordHash);
-
   return result;
 }
