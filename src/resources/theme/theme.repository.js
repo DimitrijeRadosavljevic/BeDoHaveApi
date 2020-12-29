@@ -3,25 +3,44 @@ import { driver, neo4j } from "../../utils/db"
 import { Theme } from "./theme.model"
 
 
-exports.getThemes = async (id) => {
+exports.getThemes = async (session, id) => {
 
-    const session = driver.session()
-    const result = await session.run(
-        'MATCH (p:User)--(c:Theme) where ID(p) = $id RETURN c,ID(c)',
-        {
-            id:  neo4j.int(id)
-        }
-    )  
+    console.log("Slovca");
+    return session.readTransaction( async txc => {
+        const result = await txc.run(
+                 'MATCH (p:User)--(c:Theme) where ID(p) = $id RETURN c,ID(c)',
+                 {
+                     id:  neo4j.int(id)
+                 }
+        ) 
+        
+        let allThemes = new Array();
+
+        result.records.forEach(element => {
+            allThemes.push(new Theme(element.get(0).properties.title, element.get(0).properties.description,element.get(0).properties.date, element.get(1).low));
+            allThemes.push({ ...element.get(0).properties, id:element.get(1).low })
+     });
+
+        return { themes: allThemes }
+        
+    })
+    // const session = driver.session()
+    // const result = await session.run(
+    //     'MATCH (p:User)--(c:Theme) where ID(p) = $id RETURN c,ID(c)',
+    //     {
+    //         id:  neo4j.int(id)
+    //     }
+    // )  
     
-    await session.close();
-    let allThemes = new Array();
+    // await session.close();
+    // let allThemes = new Array();
 
-    result.records.forEach(element => {
-        //allThemes.push(new Theme(element.get(0).properties.title, element.get(0).properties.description,element.get(0).properties.date, element.get(1).low));
-        allThemes.push({ ...element.get(0).properties, id:element.get(1).low })
-    });
+    // result.records.forEach(element => {
+    //     //allThemes.push(new Theme(element.get(0).properties.title, element.get(0).properties.description,element.get(0).properties.date, element.get(1).low));
+    //     allThemes.push({ ...element.get(0).properties, id:element.get(1).low })
+    // });
 
-    return { themes: allThemes}
+    // return { themes: allThemes}
 }
 
 exports.getTheme = async (userId, themeId) => {

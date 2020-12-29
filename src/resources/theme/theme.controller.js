@@ -1,8 +1,10 @@
 import * as themeRepository from "./theme.repository"
+import { getSession } from "../../utils/db"
 
 export const getThemes = async (req, res) => {
 
-    const themes = await themeRepository.getThemes(req.params.userId);
+    console.log("Slovca Controller");
+    const themes = await themeRepository.getThemes(getSession(req), req.params.userId);
     res.status(200).send(themes);
 
 } 

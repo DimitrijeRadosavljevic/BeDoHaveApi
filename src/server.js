@@ -28,10 +28,10 @@ app.use('/', authRouter)
 app.use('/api', userRouter);
 
 //Use theme router
-app.use('/api/themes', themeRouter);
+app.use('/api', themeRouter);
 app.use('/api', essayRouter);
 
-app.use('/', authRouter);
+//app.use('/', authRouter);
 
 //app.post('/register', authControler.register);
 //app.use('/api/auth', authRouter);
