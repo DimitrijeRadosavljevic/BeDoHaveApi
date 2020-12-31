@@ -23,8 +23,7 @@ const postEssay = async (req, res) => {
 
   // TODO (check if that is his theme)
   // TODO (validate essay)
-  let essay = new Essay(req.body.title, req.body.content, req.body.date);
-  console.log(essay)
+  let essay = new Essay(null, req.body.title, req.body.content, req.body.date);
   essay = await essayRepository.postEssay(getSession(req), essay, req.params.themeId)
   return respondSuccess(res, essay, 201)
 }
@@ -33,7 +32,7 @@ const putEssay = async (req, res) => {
 
   // TODO (check if that is his essay)
   // TODO (validate essay)
-  const essayHelper = new Essay(req.body.title, req.body.content, req.body.date);
+  const essayHelper = new Essay(req.body.id, req.body.title, req.body.content, req.body.date);
   const essay = await essayRepository.putEssay(getSession(req), essayHelper)
   return respondSuccess(res, essay, 200)
 }

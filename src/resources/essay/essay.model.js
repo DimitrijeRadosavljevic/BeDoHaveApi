@@ -1,6 +1,7 @@
 export class Essay {
 
-  constructor(title, content, date) {
+  constructor(id, title, content, date) {
+    this.id = id;
     this.title = title;
     this.content = content;
     this.date = date;

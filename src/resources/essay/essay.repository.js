@@ -34,19 +34,20 @@ export const getEssays = async (session, themeId, perPage, page) => {
 export const getEssay = async (session, essayId) => {
   return session.readTransaction(async txc => {
     const result = await txc.run(
-      'MATCH (a:essay) where ID(a) = $essayId ' +
-      'RETURN a,ID(a)',
+      'MATCH (essay:Essay) ' +
+      'WHERE ID(essay) = $essayId ' +
+      'RETURN essay',
       {
         essayId: neo4j.int(essayId)
       })
+    console.log(result)
     if (result.records.length == 0) {
       return null
     }
 
-    const singleRecord = result.records[0]
-    const essay = singleRecord.get(0)
-    const essayId = singleRecord.get(1).low;
-    return {...essay.properties, id: essayId}
+
+    const essay = result.records[0].get('essay')
+    return {...essay.properties, id: essay.identity.toString()}
   });
 }
 
@@ -55,8 +56,8 @@ export const postEssay = async (session, essay, themeId) => {
 
   return session.writeTransaction(async txc => {
     const result = await txc.run(
-      'CREATE (a:Essay {title: $title, content: $content, date: $date}) ' +
-      'RETURN a,ID(a)',
+      'CREATE (essay:Essay {title: $title, content: $content, date: $date}) ' +
+      'RETURN essay',
       {
         title: essay.title,
         content: essay.content,
@@ -65,12 +66,10 @@ export const postEssay = async (session, essay, themeId) => {
     )
 
     if (result.records.length == 0) {
-      return null
+      // TODO handle error
     }
 
-    const singleRecord = result.records[0]
-    const essayResult = singleRecord.get(0)
-    const essayId = singleRecord.get(1).low;
+    const essayResult = result.records[0].get('essay')
 
     const relationship = await txc.run(
       'MATCH (theme:Theme), (essay:Essay) ' +
@@ -79,7 +78,7 @@ export const postEssay = async (session, essay, themeId) => {
       'RETURN relationship',
       {
         themeId: neo4j.int(themeId),
-        essayId: neo4j.int(essayId)
+        essayId: (essayResult.identity)
       }
     );
 
@@ -87,7 +86,33 @@ export const postEssay = async (session, essay, themeId) => {
       return null
     }
 
-    return {...essayResult.properties, id: essayId}
+    return {...essayResult.properties, id: essayResult.identity.toString()}
+  });
+}
+
+
+export const putEssay = async (session, essay) => {
+  return session.writeTransaction(async txc => {
+    const result = await txc.run(
+      'MATCH (essay:Essay) ' +
+      'WHERE ID(essay) = $essayId ' +
+      'SET essay.title = $title, essay.content = $content, essay.date = $date ' +
+      'RETURN essay',
+      {
+        essayId: neo4j.int(essay.id),
+        title: essay.title,
+        content: essay.content,
+        date: essay.date
+      }
+    );
+
+    console.log(result)
+    if (result.records.length == 0) {
+      // TODO (handle error)
+    }
+
+    const essayUpdated = result.records[0].get('essay')
+    return {...essayUpdated.properties, id: essayUpdated.identity.toString()}
   });
 }
 
@@ -97,7 +122,7 @@ export const deleteEssay = async (session, essayId) => {
   return session.writeTransaction(async txc => {
     const result = await txc.run(
       'MATCH (essay:Essay) ' +
-      'WHERE ID(essay) = $essayId' +
+      'WHERE ID(essay) = $essayId ' +
       'DETACH DELETE essay',
       {
         essayId: neo4j.int(essayId)
@@ -106,32 +131,6 @@ export const deleteEssay = async (session, essayId) => {
 
     console.log(result)
     // TODO (check result object when deleting node)
-  });
-}
-
-
-export const putEssay = async (session, essay) => {
-  return session.writeTransaction(async txc => {
-    const result = await txc.run(
-      'MATCH (essay:Essay) where ID(essay) = $essayId' +
-      'SET essay.title = $title, essay.content = $content, essay.date = $date ' +
-      'RETURN essay,ID(essay)',
-      {
-        essayId: neo4j.int(essay.id),
-        title: essay.title,
-        content: essay.content,
-        date: essay.date
-      }
-    );
-
-    if (result.records.length == 0) {
-      return null
-    }
-
-    const singleRecord = result.records[0]
-    const essay = singleRecord.get(0)
-    const essayId = singleRecord.get(1).low;
-    return {...essay.properties, id: essayId}
   });
 }
 
