@@ -50,7 +50,7 @@ const protect = async (req, res, next) => {
   } catch (error) {
     return res.status(401).end()
   }
-  console.log(payload);
+
   const user = await userRepository.getUser(getSession(req), payload.id);
   req.user = user
   next()

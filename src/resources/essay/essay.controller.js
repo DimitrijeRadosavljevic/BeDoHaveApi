@@ -1,30 +1,32 @@
 import * as essayRepository from './essay.repository'
 import { Essay } from "./essay.model";
 import {getSession} from "../../utils/db";
+import {respondSuccess} from "../../helpers/response";
 
 
 const getEssays = async (req, res) => {
 
   // TODO (check if theme id exists in req)
   // TODO (check if that is his theme)
-  const essays = await essayRepository.getEssays(getSession(req), req.params.themeId);
-  return res.status(200).send(essays)
+  const result = await essayRepository.getEssays(getSession(req), req.params.themeId, req.params.perPage || 10, req.params.page || 1);
+  return respondSuccess(res, result, 200)
 }
 
 const getEssay = async (req, res) => {
 
   // TODO (check if that is his essay)
   const essay = await essayRepository.getEssay(getSession(req), req.params.essayId);
-  return res.status(200).send(essay)
+  return respondSuccess(res, essay, 200)
 }
 
 const postEssay = async (req, res) => {
 
   // TODO (check if that is his theme)
   // TODO (validate essay)
-  const essayHelper = new Essay(req.body.title, req.body.content, req.body.date);
-  const essay = await essayRepository.postEssay(getSession(req), req.params.themeId, essayHelper)
-  return res.status(201).send(essay)
+  let essay = new Essay(req.body.title, req.body.content, req.body.date);
+  console.log(essay)
+  essay = await essayRepository.postEssay(getSession(req), essay, req.params.themeId)
+  return respondSuccess(res, essay, 201)
 }
 
 const putEssay = async (req, res) => {
@@ -33,14 +35,14 @@ const putEssay = async (req, res) => {
   // TODO (validate essay)
   const essayHelper = new Essay(req.body.title, req.body.content, req.body.date);
   const essay = await essayRepository.putEssay(getSession(req), essayHelper)
-  return res.status(200).send(essay)
+  return respondSuccess(res, essay, 200)
 }
 
 const deleteEssay = async (req, res) => {
 
   // TODO (check if that is his essay)
   const essay = await essayRepository.deleteEssay(getSession(req), req.params.essayId);
-  return res.status(204).end()
+  return respondSuccess(res, null, 204)
 }
 
 

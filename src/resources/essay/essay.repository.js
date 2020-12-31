@@ -1,23 +1,33 @@
 import {driver, neo4j} from "../../utils/db";
 
 
-export const getEssays = async (session, themeId) => {
+export const getEssays = async (session, themeId, perPage, page) => {
   return session.readTransaction(async txc => {
     const result = await txc.run(
-      'MATCH (t:Theme)--(e:Essay) ' +
-      'WHERE ID(t) = $themeId ' +
-      'RETURN e,ID(e)',
+      'MATCH (theme:Theme)--(essay:Essay) ' +
+      'WHERE ID(theme) = $themeId ' +
+      'WITH collect(essay) as essays, count(essay) as total ' +
+      'UNWIND essays as essay ' +
+      'RETURN essay, total ' +
+      'ORDER BY essay.date DESC ' +
+      'SKIP $skip ' +
+      'LIMIT $limit',
       {
-        themeId: neo4j.int(themeId)
+        themeId: neo4j.int(themeId),
+        skip: neo4j.int((page - 1) * perPage),
+        limit: neo4j.int(perPage),
       })
     if (result.records.length == 0) {
-      return null
+      return { essays: new Array, total: 0}
     }
 
-    const essays = result.records.map(essay => {
-      return {...essay.get(0).properties, id: essay.get(1).low }
+    const essays = result.records.map(record => {
+      const essay = record.get('essay')
+      return {...essay.properties, id: essay.identity.toString()}
     })
-    return essays
+
+    const total = parseInt(result.records[0].get('total').toString())
+    return {essays, total}
   });
 }
 
@@ -41,25 +51,25 @@ export const getEssay = async (session, essayId) => {
 }
 
 
-export const postEssay = async (session, themeId, essay) => {
+export const postEssay = async (session, essay, themeId) => {
 
   return session.writeTransaction(async txc => {
     const result = await txc.run(
       'CREATE (a:Essay {title: $title, content: $content, date: $date}) ' +
       'RETURN a,ID(a)',
-        {
-          title: essay.title,
-          content: essay.content,
-          date: essay.date
-        }
-      );
+      {
+        title: essay.title,
+        content: essay.content,
+        date: essay.date
+      }
+    )
 
     if (result.records.length == 0) {
       return null
     }
 
     const singleRecord = result.records[0]
-    const essay = singleRecord.get(0)
+    const essayResult = singleRecord.get(0)
     const essayId = singleRecord.get(1).low;
 
     const relationship = await txc.run(
@@ -67,17 +77,17 @@ export const postEssay = async (session, themeId, essay) => {
       'where ID(theme)=$themeId and ID(essay)=$essayId ' +
       'CREATE (theme)-[relationship:Write]->(essay) ' +
       'RETURN relationship',
-        {
-          themeId: neo4j.int(themeId),
-          essayId: neo4j.int(essayId)
-        }
-      );
+      {
+        themeId: neo4j.int(themeId),
+        essayId: neo4j.int(essayId)
+      }
+    );
 
-    if(relationship.records.length == 0) {
+    if (relationship.records.length == 0) {
       return null
     }
 
-    return {...essay.properties, id: essayId}
+    return {...essayResult.properties, id: essayId}
   });
 }
 
