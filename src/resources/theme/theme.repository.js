@@ -143,3 +143,19 @@ exports.deleteTheme = async (session, userId, themeId) => {
     const Id = singleRecord.get(1).low
     return { Id: Id }
 }
+
+exports.userOwnsTheme = async (session, userId, themeId) => {
+  return session.readTransaction(async txc => {
+    const result = await txc.run(
+      'MATCH (user:User)-[relationship:Write]->(theme:Theme) ' +
+      'WHERE ID(user) = $userId AND  ID(theme) = $themeId ' +
+      'RETURN relationship',
+      {
+        userId: neo4j.int(userId),
+        themeId: neo4j.int(themeId)
+      }
+    )
+
+    return (result.records.length == 0 ? false : true)
+  })
+}

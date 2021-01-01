@@ -40,7 +40,7 @@ export const getEssay = async (session, essayId) => {
       {
         essayId: neo4j.int(essayId)
       })
-    console.log(result)
+
     if (result.records.length == 0) {
       return null
     }
@@ -106,7 +106,6 @@ export const putEssay = async (session, essay) => {
       }
     );
 
-    console.log(result)
     if (result.records.length == 0) {
       // TODO (handle error)
     }
@@ -132,5 +131,21 @@ export const deleteEssay = async (session, essayId) => {
     console.log(result)
     // TODO (check result object when deleting node)
   });
+}
+
+exports.userOwnsEssay = async (session, userId, essayId) => {
+  return session.readTransaction(async txc => {
+    const result = await txc.run(
+      'MATCH (user:User)--(theme:Theme)--(essay:Essay) ' +
+      'WHERE ID(user) = $userId AND  ID(essay) = $essayId ' +
+      'RETURN essay',
+      {
+        userId: neo4j.int(userId),
+        essayId: neo4j.int(essayId)
+      }
+    )
+
+    return (result.records.length == 0 ? false : true)
+  })
 }
 
