@@ -1,10 +1,10 @@
 export class Theme {
 
-    constructor(title, description, date, id) {
+    constructor(id, title, description, date) {
         
+        this.id = id;
         this.title = title;
         this.description = description;
         this.date = date;
-        this.id = id;
     }
 }

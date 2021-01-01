@@ -49,7 +49,8 @@ exports.postTheme = async (session, theme, userId) => {
 
     return session.writeTransaction( async txc => {
         const result = await txc.run(
-            'CREATE (a:Theme {title: $title, description: $description, date: $date}) RETURN a,ID(a)',
+          'CREATE (theme:Theme {title: $title, description: $description, date: $date}) ' +
+          'RETURN theme',
             {
                 title: theme.title,
                 description: theme.description,
@@ -57,24 +58,27 @@ exports.postTheme = async (session, theme, userId) => {
             }
         )
 
-        const singleRecord = result.records[0]
-        const node = singleRecord.get(0)
-        const themeId = singleRecord.get(1).low;
+        if (result.records.length == 0) {
+          // TODO handle error GOGI
+        }
+        const themeResult = result.records[0].get('theme')
 
         const relationship = await txc.run(
-            'MATCH (a:User), (b:Theme) where ID(a)=$userId and ID(b)=$themeId CREATE (a)-[c:Write]->(b) RETURN c',
+          'MATCH (user:User), (theme:Theme) ' +
+          'WHERE ID(user)=$userId and ID(theme)=$themeId ' +
+          'CREATE (user)-[relationship:Write]->(theme) ' +
+          'RETURN relationship',
             {
                 userId: neo4j.int(userId),
-                themeId: neo4j.int(themeId)
+                themeId: themeResult.identity
             }
         )
 
         if(relationship.records.length == 0) {
-            return null
+            // TODO handle error GOGI
         }
 
-        console.log( relationship.records );
-        return { ...node.properties, id: themeId }
+        return { ...themeResult.properties, id: themeResult.identity.toString() }
     })
 }
 

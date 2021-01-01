@@ -1,5 +1,7 @@
 import * as themeRepository from "./theme.repository"
 import { getSession } from "../../utils/db"
+import {respondError, respondSuccess} from "../../helpers/response";
+import {Theme} from "./theme.model";
 
 export const getThemes = async (req, res) => {
 
@@ -20,11 +22,12 @@ export const getTheme = async (req, res) => {
 
 export const postTheme = async (req, res) => {
 
-    const theme = await themeRepository.postTheme(getSession(req), req.body, req.params.userId);
+    let theme = new Theme(null, req.body.title, req.body.description, req.body.date)
+    theme = await themeRepository.postTheme(getSession(req), req.body, req.user.id);
     if(theme != null)
-        res.status(200).send(theme);
-    else 
-        res.status(404).send("Error");
+        return respondSuccess(res, theme, 201)
+
+    // TODO handle error GOGI
 
 }
 

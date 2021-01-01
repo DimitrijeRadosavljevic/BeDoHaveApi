@@ -83,7 +83,7 @@ export const postEssay = async (session, essay, themeId) => {
     );
 
     if (relationship.records.length == 0) {
-      return null
+      // TODO handle error
     }
 
     return {...essayResult.properties, id: essayResult.identity.toString()}
