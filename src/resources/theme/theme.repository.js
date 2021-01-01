@@ -49,12 +49,14 @@ exports.postTheme = async (session, theme, userId) => {
 
     return session.writeTransaction( async txc => {
         const result = await txc.run(
-          'CREATE (theme:Theme {title: $title, description: $description, date: $date}) ' +
+          'CREATE (theme:Theme {title: $title, description: $description, date: $date, reminder: $reminder, scheduleAnswer: $scheduleAnswer }) ' +
           'RETURN theme',
             {
                 title: theme.title,
                 description: theme.description,
-                date: theme.date
+                date: theme.date,
+                reminder: theme.reminder,
+                scheduleAnswer: null
             }
         )
 

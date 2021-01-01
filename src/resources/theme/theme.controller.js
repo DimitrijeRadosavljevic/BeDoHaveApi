@@ -22,7 +22,7 @@ export const getTheme = async (req, res) => {
 
 export const postTheme = async (req, res) => {
 
-    let theme = new Theme(null, req.body.title, req.body.description, req.body.date)
+    let theme = new Theme(null, req.body.title, req.body.description, req.body.date, req.body.reminder)
     theme = await themeRepository.postTheme(getSession(req), req.body, req.user.id);
     if(theme != null)
         return respondSuccess(res, theme, 201)
