@@ -78,7 +78,24 @@ exports.postTheme = async (session, theme, userId) => {
             // TODO handle error GOGI
         }
 
-        return { ...themeResult.properties, id: themeResult.identity.toString() }
+        theme.tags.map(async tag => {
+          const relationship = await txc.run(
+            'MATCH (theme:Theme), (tag:Tag) ' +
+            'WHERE ID(theme)=$themeId and ID(tag)=$tagId ' +
+            'CREATE (theme)-[relationship:Tagged]->(tag) ' +
+            'RETURN relationship',
+            {
+              themeId: themeResult.identity,
+              tagId: neo4j.int(tag.id)
+            }
+          )
+
+          if(relationship.records.length == 0) {
+            // TODO handle error GOGI
+          }
+        })
+
+        return { ...themeResult.properties, id: themeResult.identity.toString(), tags: theme.tags }
     })
 }
 
