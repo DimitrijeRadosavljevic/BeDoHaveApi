@@ -25,3 +25,26 @@ export const getTags = async (session, name) => {
     return tags
   });
 }
+
+export const getTagsForTheme = async (session, themeId) => {
+  return session.readTransaction(async txc => {
+    const result = await txc.run(
+      'MATCH (theme:Theme)--(tag:Tag) where ID(theme) = $themeId RETURN tag',
+      {
+        themeId: neo4j.int(themeId)
+      }
+    )
+
+    if(result.records.length == 0) {
+      const tags = new Array();
+      return { tags }
+    }
+
+    const tags = result.records.map(record => {
+      const tag = record.get('tag')
+      return { ...tag.properties, id:tag.identity.toString() }
+    })
+
+    return tags;
+  });
+}

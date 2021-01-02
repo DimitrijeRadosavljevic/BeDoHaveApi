@@ -4,8 +4,8 @@ import { Theme } from "./theme.model"
 
 
 exports.getThemes = async (session, id) => {
-
-    return session.readTransaction( async txc => {
+    console.log(id);
+        return session.readTransaction( async txc => {
         const result = await txc.run(
             'MATCH (p:User)--(c:Theme) where ID(p) = $id RETURN c,ID(c)',
             {
@@ -19,7 +19,7 @@ exports.getThemes = async (session, id) => {
             allThemes.push({ ...element.get(0).properties, id:element.get(1).low })
      });
 
-        return { themes: allThemes }
+        return { data: allThemes }
         
     })
 }
@@ -40,7 +40,7 @@ exports.getTheme = async (session, userId, themeId) => {
         }
         const singleRecord = result.records[0]
         const theme = singleRecord.get(0).properties
-        const Id = singleRecord.get(1).low
+        const Id = singleRecord.get(0).identity.toString();
         return { ...theme, id: Id }
     }) 
 }
@@ -61,7 +61,7 @@ exports.postTheme = async (session, theme, userId) => {
         )
 
         if (result.records.length == 0) {
-          // TODO handle error GOGI
+          return 1;
         }
         const themeResult = result.records[0].get('theme')
 
@@ -77,7 +77,7 @@ exports.postTheme = async (session, theme, userId) => {
         )
 
         if(relationship.records.length == 0) {
-            // TODO handle error GOGI
+            return 2;
         }
 
         theme.tags.map(async tag => {
@@ -92,9 +92,9 @@ exports.postTheme = async (session, theme, userId) => {
             }
           )
 
-          if(relationship.records.length == 0) {
-            // TODO handle error GOGI
-          }
+        //   if(relationship.records.length == 0) {
+        //     // TODO handle error GOGI
+        //   }
         })
 
         return { ...themeResult.properties, id: themeResult.identity.toString(), tags: theme.tags }
@@ -120,30 +120,38 @@ exports.putTheme = async (session, userId, themeId, theme) => {
         }
         const singleRecord = result.records[0]
         const themeFromDatabase = singleRecord.get(0).properties
-        const Id = singleRecord.get(1).low
+        const Id = singleRecord.get(0).identity.toString()
         return { ...themeFromDatabase, id: Id }
     })
 }
 
 exports.deleteTheme = async (session, userId, themeId) => {
 
-    const result = await session.run(
-        'MATCH (a:Theme)--(c:User) where ID(a) = $themeId and ID(c) = $userId DETACH DELETE a RETURN a,ID(a)',
-        {
-            themeId: neo4j.int(themeId),
-            userId: neo4j.int(userId)
+    return session.writeTransaction(async txc => {
+        
+        const deleteEssays = await txc.run(
+            'MATCH (theme:Theme)--(essay:Essay) where ID(theme)=$themeId DETACH DELETE essay RETURN ID(essay) ',
+            {
+                themeId: neo4j.int(themeId)
+            }
+        )
+
+        const result = await txc.run(
+            'MATCH (theme:Theme)--(user:User) where ID(theme) = $themeId and ID(user) = $userId DETACH DELETE theme RETURN theme,ID(theme)',
+                {
+                    themeId: neo4j.int(themeId),
+                    userId: neo4j.int(userId)
+                }
+        )
+
+        if(result.records.length == 0) {
+            return null
         }
-    )
-
-    await session.close();
-
-    if(result.records.length == 0) {
-         return null
-    }
-    const singleRecord = result.records[0]
-    const theme = singleRecord.get(0).properties
-    const Id = singleRecord.get(1).low
-    return { Id: Id }
+        const singleRecord = result.records[0]
+        const theme = singleRecord.get(0).properties
+        const Id = singleRecord.get('theme').identity.toString();
+        return { Id }
+    })
 }
 
 exports.userOwnsTheme = async (session, userId, themeId) => {
@@ -161,3 +169,31 @@ exports.userOwnsTheme = async (session, userId, themeId) => {
     return (result.records.length == 0 ? false : true)
   })
 }
+export const getThemesPaginate = async (session, userId, perPage, page) => {
+    return session.readTransaction(async txc => {
+      const result = await txc.run(
+        'MATCH (user:User)--(theme:Theme) ' +
+        'WHERE ID(user) = $userId ' +
+        'WITH collect(theme) as themes, count(theme) as total ' +
+        'UNWIND themes as theme ' +
+        'RETURN theme, total ' +
+        'ORDER BY theme.date DESC ' +
+        'SKIP $skip ' +
+        'LIMIT $limit',
+        {
+          userId: neo4j.int(userId),
+          skip: neo4j.int((page - 1) * perPage),
+          limit: neo4j.int(perPage),
+        })
+      if (result.records.length == 0) {
+        return { themes: new Array, total: 0}
+      }
+  
+      const themes = result.records.map(record => {
+        const theme = record.get('theme')
+        return {...theme.properties, id: theme.identity.toString()}
+      })
+      const total = parseInt(result.records[0].get('total').toString())
+      return { themes, total}
+    });
+  }
