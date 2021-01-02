@@ -35,12 +35,10 @@ export const postTheme = async (req, res) => {
     }
     let theme = new Theme(null, req.body.title, req.body.description, req.body.date, req.body.reminder, req.body.tags)
     theme = await themeRepository.postTheme(getSession(req), theme, req.user.id);
-    if(theme != 1 && theme !=2)
+    if(theme != null)
         return respondSuccess(res, theme, 201);
-    else if (theme == 1)
-        return respondError(res, "Theme not created", 400)  
     else 
-        return respondError(res, "Relationship not created", 400)
+        return respondError(res, "Theme not created", 400);
 }
 
 export const deleteTheme = async (req, res) => {
@@ -53,7 +51,7 @@ export const deleteTheme = async (req, res) => {
 
     const theme = await themeRepository.deleteTheme(getSession(req), req.user.id, req.params.themeId)
     if(theme != null) 
-        return respondSuccess(res, null, 201);
+        return respondSuccess(res, null, 204);
     else 
         return respondError(res, "Not faund", 404);
 }

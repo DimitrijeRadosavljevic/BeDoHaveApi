@@ -8,8 +8,8 @@ export const getTags = async (req, res) => {
   return respondSuccess(res, tags, 200)
 }
 
-export const getTagsForTheme = async (req, res) => {
+export const getThemeTags = async (req, res) => {
 
-  const tags = await tagRepository.getTagsForTheme(getSession(req), req.params.themeId)
+  const tags = await tagRepository.getThemeTags(getSession(req), req.params.themeId)
   return respondSuccess(res, tags, 200)
 }

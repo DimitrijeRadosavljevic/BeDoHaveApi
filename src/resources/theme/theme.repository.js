@@ -61,7 +61,7 @@ exports.postTheme = async (session, theme, userId) => {
         )
 
         if (result.records.length == 0) {
-          return 1;
+          return null;
         }
         const themeResult = result.records[0].get('theme')
 
@@ -77,7 +77,7 @@ exports.postTheme = async (session, theme, userId) => {
         )
 
         if(relationship.records.length == 0) {
-            return 2;
+            return null;
         }
 
         theme.tags.map(async tag => {
@@ -92,9 +92,11 @@ exports.postTheme = async (session, theme, userId) => {
             }
           )
 
-        //   if(relationship.records.length == 0) {
-        //     // TODO handle error GOGI
-        //   }
+          if(theme.tags.length > 0) {
+            if(relationship.records.length == 0) {
+              return null
+            }
+          }
         })
 
         return { ...themeResult.properties, id: themeResult.identity.toString(), tags: theme.tags }

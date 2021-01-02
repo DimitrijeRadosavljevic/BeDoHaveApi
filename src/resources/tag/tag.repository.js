@@ -26,7 +26,7 @@ export const getTags = async (session, name) => {
   });
 }
 
-export const getTagsForTheme = async (session, themeId) => {
+export const getThemeTags = async (session, themeId) => {
   return session.readTransaction(async txc => {
     const result = await txc.run(
       'MATCH (theme:Theme)--(tag:Tag) where ID(theme) = $themeId RETURN tag',
