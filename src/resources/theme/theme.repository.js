@@ -91,12 +91,9 @@ exports.postTheme = async (session, theme, userId) => {
               tagId: neo4j.int(tag.id)
             }
           )
-
-          if(theme.tags.length > 0) {
-            if(relationship.records.length == 0) {
+            if(relationship.recordslength == 0) {
               return null
             }
-          }
         })
 
         return { ...themeResult.properties, id: themeResult.identity.toString(), tags: theme.tags }
