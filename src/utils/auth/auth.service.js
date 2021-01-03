@@ -14,11 +14,12 @@ export const verifyToken = async token => {
 }
 
 export const checkPassword = async (password, passwordHash) => {
-  const result = await bcrypt.compare(password, passwordHash);
-  return result;
+  const result = await bcrypt.compare(password, passwordHash)
+  return result
 }
 
 export const createHashPassword = async (password) => {
   const hashPassword = await bcrypt.hash(password, 8)
   return hashPassword;
 }
+

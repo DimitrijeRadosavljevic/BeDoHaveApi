@@ -1,22 +1,20 @@
 import * as userRepository from "../../resources/user/user.repository";
 import {newToken, verifyToken, createHashPassword, checkPassword} from "./auth.service";
 import { getSession } from "../db";
+import {respondError} from "../../helpers/response";
 
 const login = async (req, res) => {
   // TODO(login 1) add validation logic
 
   const email = req.body.email
   const user = await userRepository.getUserByEmail(getSession(req), email)
-  console.log('LOGIN USER:', user)
   if (!user) return res.status(401).end()
 
-  // TODO(login 2) uncomment when register is added
-  // try {
-  //   await checkPassword(req.body.password, user.password);
-  // }
-  // catch (error) {
-  //   res.status(401).end()
-  // }
+  const match = await checkPassword(req.body.password, user.password);
+
+  if (!match) {
+    return respondError(res, null, 401)
+  }
 
   const token = newToken(user)
   return res.status(200).send({token, data: user})
