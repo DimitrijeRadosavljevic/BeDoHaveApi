@@ -1,5 +1,5 @@
 import { int, Integer } from "neo4j-driver";
-import { driver, neo4j } from "../../utils/db"
+import { driver, neo4j, THEME_TAG, USER_THEME } from "../../utils/db"
 import { Theme } from "./theme.model"
 
 
@@ -7,7 +7,7 @@ exports.getThemes = async (session, id) => {
     console.log(id);
         return session.readTransaction( async txc => {
         const result = await txc.run(
-            'MATCH (p:User)--(c:Theme) where ID(p) = $id RETURN c,ID(c)',
+            `MATCH (p:User)-[:${USER_THEME}]->(c:Theme) where ID(p) = $id RETURN c,ID(c)`,
             {
                 id:  neo4j.int(id)
             }
@@ -28,7 +28,7 @@ exports.getTheme = async (session, userId, themeId) => {
 
     return session.readTransaction( async txc => {
         const result = await txc.run(
-            'MATCH (a:Theme)--(c:User) where ID(a) = $themeId and ID(c) = $userId RETURN a,ID(a)',
+            `MATCH (a:Theme)<-[:${USER_THEME}]-(c:User) where ID(a) = $themeId and ID(c) = $userId RETURN a,ID(a)`,
             {
                 themeId: neo4j.int(themeId),
                 userId: neo4j.int(userId)
@@ -68,7 +68,7 @@ exports.postTheme = async (session, theme, userId) => {
         const relationship = await txc.run(
           'MATCH (user:User), (theme:Theme) ' +
           'WHERE ID(user)=$userId and ID(theme)=$themeId ' +
-          'CREATE (user)-[relationship:Owns]->(theme) ' +
+          `CREATE (user)-[relationship:${USER_THEME}]->(theme) ` +
           'RETURN relationship',
             {
                 userId: neo4j.int(userId),
@@ -84,7 +84,7 @@ exports.postTheme = async (session, theme, userId) => {
           const relationship = await txc.run(
             'MATCH (theme:Theme), (tag:Tag) ' +
             'WHERE ID(theme)=$themeId and ID(tag)=$tagId ' +
-            'CREATE (theme)-[relationship:Tagged]->(tag) ' +
+            `CREATE (theme)-[relationship:${THEME_TAG}]->(tag) ` +
             'RETURN relationship',
             {
               themeId: themeResult.identity,
@@ -104,7 +104,7 @@ exports.putTheme = async (session, userId, themeId, theme) => {
 
     return session.writeTransaction(async txc => {
         const result = await txc.run(
-            'MATCH (a:Theme)--(c:User) where ID(a) = $themeId and ID(c) = $userId SET a.date = $date, a.description = $description, a.title = $title RETURN a,ID(a)',
+            `MATCH (a:Theme)<-[${USER_THEME}]-(c:User) where ID(a) = $themeId and ID(c) = $userId SET a.date = $date, a.description = $description, a.title = $title RETURN a,ID(a)`,
             {
                 themeId: neo4j.int(themeId),
                 userId: neo4j.int(userId),
@@ -129,14 +129,14 @@ exports.deleteTheme = async (session, userId, themeId) => {
     return session.writeTransaction(async txc => {
         
         const deleteEssays = await txc.run(
-            'MATCH (theme:Theme)--(essay:Essay) where ID(theme)=$themeId DETACH DELETE essay RETURN ID(essay) ',
+            `MATCH (theme:Theme)-[:${THEME_ESSAY}]->(essay:Essay) where ID(theme)=$themeId DETACH DELETE essay RETURN ID(essay) `,
             {
                 themeId: neo4j.int(themeId)
             }
         )
 
         const result = await txc.run(
-            'MATCH (theme:Theme)--(user:User) where ID(theme) = $themeId and ID(user) = $userId DETACH DELETE theme RETURN theme,ID(theme)',
+            `MATCH (theme:Theme)<-[:${USER_THEME}]-(user:User) where ID(theme) = $themeId and ID(user) = $userId DETACH DELETE theme RETURN theme,ID(theme)`,
                 {
                     themeId: neo4j.int(themeId),
                     userId: neo4j.int(userId)
@@ -156,7 +156,7 @@ exports.deleteTheme = async (session, userId, themeId) => {
 exports.userOwnsTheme = async (session, userId, themeId) => {
   return session.readTransaction(async txc => {
     const result = await txc.run(
-      'MATCH (user:User)-[relationship:Write]->(theme:Theme) ' +
+      `MATCH (user:User)-[relationship:${USER_THEME}]->(theme:Theme) ` +
       'WHERE ID(user) = $userId AND  ID(theme) = $themeId ' +
       'RETURN relationship',
       {
@@ -175,7 +175,7 @@ export const getThemesPaginate = async (session, userId, perPage, page, title, t
       console.log(tags);
       console.log(title);
         const result = await txc.run(
-        'MATCH (user:User)--(theme:Theme) ' +
+        `MATCH (user:User)-[:${USER_THEME}]->(theme:Theme) ` +
         'WHERE ID(user) = $userId ' +
         'and theme.title CONTAINS $title '+
         'WITH collect(theme) as themes, count(theme) as total ' +
@@ -205,7 +205,7 @@ export const getThemesPaginate = async (session, userId, perPage, page, title, t
       console.log(tags);
       console.log(title);
         const result = await txc.run(
-        'MATCH (user:User)--(theme:Theme)--(tag:Tag) ' +
+        `MATCH (user:User)-[:${USER_THEME}]->(theme:Theme)-[:${THEME_TAG}]->(tag:Tag) ` +
         'WHERE ID(user) = $userId ' +
         'and $tags CONTAINS tag.name ' +
         'and theme.title CONTAINS $title '+
