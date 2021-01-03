@@ -2,10 +2,13 @@ import * as userRepository from "../../resources/user/user.repository";
 import {newToken, verifyToken, createHashPassword, checkPassword} from "./auth.service";
 import { getSession } from "../db";
 import {respondError} from "../../helpers/response";
+import {validationResult} from "express-validator";
 
 const login = async (req, res) => {
-  // TODO(login 1) add validation logic
-
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    respondError(res, errors.array(), 400)
+  }
   const email = req.body.email
   const user = await userRepository.getUserByEmail(getSession(req), email)
   if (!user) return res.status(401).end()
@@ -58,9 +61,31 @@ const identify = async (req, res) => {
   return res.status(200).send({ data: req.user });
 }
 
+const loginValidate = {
+  email: {
+    in: ['body'],
+    isLength: {
+      errorMessage: 'Email required',
+      options: { min: 1 }
+    },
+    isEmail: {
+      errorMessage: 'Email wrong format',
+    }
+  },
+  password: {
+    in: ['body'],
+    isLength: {
+      errorMessage: 'Password required',
+      options: { min: 1 }
+    }
+  },
+}
+
 export const authController = {
   login,
   register,
   protect,
-  identify
+  identify,
+
+  loginValidate
 }
