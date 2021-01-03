@@ -1,10 +1,10 @@
-import {driver, neo4j} from "../../utils/db";
+import {driver, neo4j, THEME_ESSAY, USER_THEME} from "../../utils/db";
 
 
 export const getEssays = async (session, themeId, perPage, page) => {
   return session.readTransaction(async txc => {
     const result = await txc.run(
-      'MATCH (theme:Theme)--(essay:Essay) ' +
+      `MATCH (theme:Theme)-[:${THEME_ESSAY}]->(essay:Essay) ` +
       'WHERE ID(theme) = $themeId ' +
       'WITH collect(essay) as essays, count(essay) as total ' +
       'UNWIND essays as essay ' +
@@ -74,7 +74,7 @@ export const postEssay = async (session, essay, themeId) => {
     const relationship = await txc.run(
       'MATCH (theme:Theme), (essay:Essay) ' +
       'where ID(theme)=$themeId and ID(essay)=$essayId ' +
-      'CREATE (theme)-[relationship:Write]->(essay) ' +
+      `CREATE (theme)-[relationship:${THEME_ESSAY}]->(essay) ` +
       'RETURN relationship',
       {
         themeId: neo4j.int(themeId),
@@ -136,7 +136,7 @@ export const deleteEssay = async (session, essayId) => {
 exports.userOwnsEssay = async (session, userId, essayId) => {
   return session.readTransaction(async txc => {
     const result = await txc.run(
-      'MATCH (user:User)--(theme:Theme)--(essay:Essay) ' +
+      `MATCH (user:User)-[:${USER_THEME}]-?(theme:Theme)-[:${THEME_ESSAY}]->(essay:Essay) ` +
       'WHERE ID(user) = $userId AND  ID(essay) = $essayId ' +
       'RETURN essay',
       {
@@ -147,5 +147,68 @@ exports.userOwnsEssay = async (session, userId, essayId) => {
 
     return (result.records.length == 0 ? false : true)
   })
+}
+
+export const getEssaysWithUser = async (session, themeId, perPage, page, userId) => {
+  return session.readTransaction(async txc => {
+    const result = await txc.run(
+      'MATCH (user:User)--(theme:Theme)--(essay:Essay)' +
+      'WHERE ID(theme) = $themeId ' +
+      'WITH collect(essay) as essays, count(essay) as total, user ' +
+      'UNWIND essays as essay ' +
+      'RETURN essay, user, total ' +
+      'ORDER BY essay.date DESC ' +
+      'SKIP $skip ' +
+      'LIMIT $limit',
+      {
+        themeId: neo4j.int(themeId),
+        userId: neo4j.int(userId),
+        skip: neo4j.int((page - 1) * perPage),
+        limit: neo4j.int(perPage),
+      })
+
+    if (result.records.length == 0) {
+      return { essays: new Array, total: 0}
+    }
+
+
+    const essays = result.records.map(record => {
+      const essay = record.get('essay')
+      const user = record.get('user')
+      return {
+        ...essay.properties,
+        id: essay.identity.toString(),
+        user: {
+          ...user.properties,
+          id: user.identity.toString()
+        }
+      }
+    })
+
+    const total = parseInt(result.records[0].get('total').toString())
+    return {essays, total}
+  });
+}
+
+// fetch essay, with theme, user who owns theme and user who wrote essay
+export const getEssayDetail = (session, essayId) => {
+  return session.readTransaction(async txc => {
+    const result = await txc.run(
+      'MATCH (userOwnsTheme:User)-[:Owns]->(theme:Theme)-[:Has]->(essay:Essay)<-[:Wrote]-(userWroteEssay:User) ' +
+      'WHERE ID(essay) = $essayId ' +
+      'WITH userOwnsTheme, theme, userWroteEssay ' +
+      'RETURN essay, userOwnsTheme, theme, userWroteEssay',
+      {
+        essayId: neo4j.int(essayId)
+      })
+
+    if (result.records.length == 0) {
+      return null
+    }
+
+
+    const essay = result.records[0].get('essay')
+    return {...essay.properties, id: essay.identity.toString()}
+  });
 }
 

@@ -15,6 +15,7 @@ const getEssays = async (req, res) => {
   if (!usersTheme) respondError(res, null, 401)
 
   const result = await essayRepository.getEssays(getSession(req), req.params.themeId, req.params.perPage || 10, req.params.page || 1);
+  // const result = await essayRepository.getEssaysWithUser(getSession(req), req.params.themeId, req.params.perPage || 10, req.params.page || 1, req.user.id);
   return respondSuccess(res, result, 200)
 }
 

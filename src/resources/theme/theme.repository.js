@@ -68,7 +68,7 @@ exports.postTheme = async (session, theme, userId) => {
         const relationship = await txc.run(
           'MATCH (user:User), (theme:Theme) ' +
           'WHERE ID(user)=$userId and ID(theme)=$themeId ' +
-          'CREATE (user)-[relationship:Write]->(theme) ' +
+          'CREATE (user)-[relationship:Owns]->(theme) ' +
           'RETURN relationship',
             {
                 userId: neo4j.int(userId),
