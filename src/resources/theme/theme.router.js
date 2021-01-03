@@ -1,10 +1,12 @@
 import { Router } from "express";
+import {check, checkSchema} from "express-validator";
 import * as themeController from "./theme.controller"
+
 
 export const themeRouter = new Router();
 
 themeRouter.route('/themes')
-    .post( themeController.postTheme )
+    .post(checkSchema(themeController.validateTheme), themeController.postTheme )
 themeRouter.route('/themes')
     .get( themeController.getThemesPaginate )
 

@@ -58,6 +58,17 @@ export const deleteTheme = async (req, res) => {
 
 export const putTheme = async (req, res) => {
 
+    const themeId = req.params.themeId;
+    if(!themeId) respondError(res, "Theme id is reqired");
+
+    const usersTheme = await themeRepository.userOwnsTheme(getSession(req), req.user.id, themeId)
+    if(!usersTheme) return respondError(res, null, 401);
+
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        respondError(res, errors.array(), 400)
+    }
+    
     const theme = await themeRepository.putTheme(getSession(req), req.user.id, req.params.themeId, req.body)
     if(theme != null)
         res.status(200).send(theme)
@@ -68,6 +79,22 @@ export const putTheme = async (req, res) => {
 
 export const getThemesPaginate = async (req, res) => {
 
-    const theme = await themeRepository.getThemesPaginate(getSession(req), req.user.id, req.query.perPage || 6, req.query.page || 1);
+    const theme = await themeRepository.getThemesPaginate(getSession(req), req.user.id, req.query.perPage || 6, req.query.page || 1, req.query.title, req.query.tags);
     return respondSuccess(res, theme, 200)
 }
+
+export const validateTheme = {
+    title: {
+      in: ['body'],
+      isLength: {
+        errorMessage: 'Title must have at least one character',
+        options: { min: 1 }
+      }
+    },
+    date: {
+      in: ['body'],
+      isDate: {
+        errorMessage: 'Parameter date must be of type Date'
+      }
+    }
+  }

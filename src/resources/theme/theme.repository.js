@@ -168,11 +168,16 @@ exports.userOwnsTheme = async (session, userId, themeId) => {
     return (result.records.length == 0 ? false : true)
   })
 }
-export const getThemesPaginate = async (session, userId, perPage, page) => {
-    return session.readTransaction(async txc => {
-      const result = await txc.run(
+export const getThemesPaginate = async (session, userId, perPage, page, title, tags) => {
+  
+  return session.readTransaction(async txc => {
+    if(!tags) {
+      console.log(tags);
+      console.log(title);
+        const result = await txc.run(
         'MATCH (user:User)--(theme:Theme) ' +
         'WHERE ID(user) = $userId ' +
+        'and theme.title CONTAINS $title '+
         'WITH collect(theme) as themes, count(theme) as total ' +
         'UNWIND themes as theme ' +
         'RETURN theme, total ' +
@@ -183,16 +188,51 @@ export const getThemesPaginate = async (session, userId, perPage, page) => {
           userId: neo4j.int(userId),
           skip: neo4j.int((page - 1) * perPage),
           limit: neo4j.int(perPage),
+          title: (title ? title : ''),
         })
+
       if (result.records.length == 0) {
         return { themes: new Array, total: 0}
       }
-  
+
       const themes = result.records.map(record => {
         const theme = record.get('theme')
         return {...theme.properties, id: theme.identity.toString()}
       })
       const total = parseInt(result.records[0].get('total').toString())
       return { themes, total}
-    });
-  }
+    } else {
+      console.log(tags);
+      console.log(title);
+        const result = await txc.run(
+        'MATCH (user:User)--(theme:Theme)--(tag:Tag) ' +
+        'WHERE ID(user) = $userId ' +
+        'and $tags CONTAINS tag.name ' +
+        'and theme.title CONTAINS $title '+
+        'WITH collect(theme) as themes, count(theme) as total ' +
+        'UNWIND themes as theme ' +
+        'RETURN theme, total ' +
+        'ORDER BY theme.date DESC ' +
+        'SKIP $skip ' +
+        'LIMIT $limit',
+        {
+          userId: neo4j.int(userId),
+          skip: neo4j.int((page - 1) * perPage),
+          limit: neo4j.int(perPage),
+          title: (title ? title : ''),
+          tags: tags
+        })
+
+      if (result.records.length == 0) {
+        return { themes: new Array, total: 0}
+      }
+
+      const themes = result.records.map(record => {
+        const theme = record.get('theme')
+        return {...theme.properties, id: theme.identity.toString()}
+      })
+      const total = parseInt(result.records[0].get('total').toString())
+      return { themes, total}
+    }
+  });
+}
