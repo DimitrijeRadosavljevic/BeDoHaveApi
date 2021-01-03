@@ -19,7 +19,7 @@ export const getTheme = async (req, res) => {
     const usersTheme = await themeRepository.userOwnsTheme(getSession(req), req.user.id, themeId)
     if(!usersTheme) return respondError(res, null, 401);
 
-    const theme = await themeRepository.getTheme(getSession(req), req.user.id, req.params.themeId);
+    const theme = await themeRepository.getTheme(getSession(req), req.user.id, req.params.themeId, req.query.tags);
     if(theme != null)
        return respondSuccess(res, theme, 200);
     else 

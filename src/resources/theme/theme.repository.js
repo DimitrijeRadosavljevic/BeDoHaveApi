@@ -24,11 +24,11 @@ exports.getThemes = async (session, id) => {
     })
 }
 
-exports.getTheme = async (session, userId, themeId) => {
+exports.getTheme = async (session, userId, themeId, tags) => {
 
     return session.readTransaction( async txc => {
         const result = await txc.run(
-            `MATCH (a:Theme)<-[:${USER_THEME}]-(c:User) where ID(a) = $themeId and ID(c) = $userId RETURN a,ID(a)`,
+            `MATCH ` +(tags ? `(tag:Tag)<-[:Tagged]-` : ``)+`(a:Theme)<-[:${USER_THEME}]-(c:User) where ID(a) = $themeId and ID(c) = $userId RETURN a,ID(a)`+(tags ? `,tag,ID(tag)`: ``),
             {
                 themeId: neo4j.int(themeId),
                 userId: neo4j.int(userId)
@@ -41,7 +41,16 @@ exports.getTheme = async (session, userId, themeId) => {
         const singleRecord = result.records[0]
         const theme = singleRecord.get(0).properties
         const Id = singleRecord.get(0).identity.toString();
-        return { ...theme, id: Id }
+        let themeTags = new Array();
+        if(tags) {
+          result.records.forEach( record => {
+            let tag = record.get('tag').properties;
+            let tagId = record.get('tag').identity.toString();
+            themeTags.push({ ...tag, id: tagId })
+          })
+        }
+        console.log(themeTags);
+        return { ...theme, id: Id, tags: themeTags }
     }) 
 }
 
