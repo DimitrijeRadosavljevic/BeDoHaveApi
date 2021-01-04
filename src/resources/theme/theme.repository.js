@@ -49,7 +49,6 @@ exports.getTheme = async (session, userId, themeId, tags) => {
             themeTags.push({ ...tag, id: tagId })
           })
         }
-        console.log(themeTags);
         return { ...theme, id: Id, tags: themeTags }
     }) 
 }

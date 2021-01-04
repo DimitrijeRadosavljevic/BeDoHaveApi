@@ -3,6 +3,7 @@ import { getSession } from "../../utils/db"
 import {respondError, respondSuccess} from "../../helpers/response";
 import {Theme} from "./theme.model";
 import { validationResult } from   "express-validator";
+import { getThemeTags } from "../tag/tag.repository";
 
 export const getThemes = async (req, res) => {
 
@@ -19,7 +20,16 @@ export const getTheme = async (req, res) => {
     const usersTheme = await themeRepository.userOwnsTheme(getSession(req), req.user.id, themeId)
     if(!usersTheme) return respondError(res, null, 401);
 
-    const theme = await themeRepository.getTheme(getSession(req), req.user.id, req.params.themeId, req.query.tags);
+    
+    let returnTags = false;//Check if a theme has tag, if have return if not do not search for them
+    if(req.query.tags) {
+        let tags = await getThemeTags(getSession(req), req.params.themeId);
+        if( tags[0] == null)
+            returnTags = false;
+        else 
+            returnTags = true;
+    }
+    const theme = await themeRepository.getTheme(getSession(req), req.user.id, req.params.themeId, returnTags);
     if(theme != null)
        return respondSuccess(res, theme, 200);
     else 
