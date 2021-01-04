@@ -88,6 +88,16 @@ const getEssayDetail = async (req, res) => {
   return respondSuccess(res, essay, 200)
 }
 
+// returns essays and users that wrote them
+const getEssaysPublic = async (req, res) => {
+
+  // Check if theme is public
+  const themeId = req.params.themeId
+  const essays = await essayRepository.getEssaysWithUser(getSession(req), themeId, req.query.perPage, req.query.page)
+
+  respondSuccess(res, essays, 200)
+}
+
 const validateEssay = {
   title: {
     in: ['body'],
@@ -115,6 +125,7 @@ const validateEssay = {
 
 export const essayController = {
   getEssays,
+  getEssaysPublic,
   getEssay,
   getEssayDetail,
   postEssay,

@@ -7,6 +7,9 @@ export const essayRouter = new Router()
 essayRouter.route('/themes/:themeId/essays')
                   .get(essayController.getEssays)
 
+essayRouter.route('/themes/:themeId/essays/public')
+                  .get(essayController.getEssaysPublic)
+
 essayRouter.post('/themes/:themeId/essays', checkSchema(essayController.validateEssay), essayController.postEssay)
 
 essayRouter.route('/essays/:essayId')

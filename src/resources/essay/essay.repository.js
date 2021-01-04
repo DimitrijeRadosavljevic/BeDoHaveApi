@@ -164,20 +164,20 @@ exports.userOwnsEssay = async (session, userId, essayId) => {
   })
 }
 
-export const getEssaysWithUser = async (session, themeId, perPage, page, userId) => {
+export const getEssaysWithUser = async (session, themeId, perPage, page) => {
   return session.readTransaction(async txc => {
     const result = await txc.run(
-      'MATCH (user:User)--(theme:Theme)--(essay:Essay)' +
+      `MATCH (theme:Theme)-[:${THEME_ESSAY}]->(essay:Essay)<-[:${USER_ESSAY}]-(user:User) ` +
+      // `OPTIONAL MATCH (essay:Essay)<-[:${USER_ESSAY_LIKES}]-(userLikesEssay:User) ` +
       'WHERE ID(theme) = $themeId ' +
-      'WITH collect(essay) as essays, count(essay) as total, user ' +
+      `WITH collect(essay) as essays, count(essay) as total, user, size( (essay)<-[:${USER_ESSAY_LIKES}]-() ) as likers ` +
       'UNWIND essays as essay ' +
-      'RETURN essay, user, total ' +
+      'RETURN essay, user, total, likers ' +
       'ORDER BY essay.date DESC ' +
       'SKIP $skip ' +
       'LIMIT $limit',
       {
         themeId: neo4j.int(themeId),
-        userId: neo4j.int(userId),
         skip: neo4j.int((page - 1) * perPage),
         limit: neo4j.int(perPage),
       })
@@ -190,13 +190,15 @@ export const getEssaysWithUser = async (session, themeId, perPage, page, userId)
     const essays = result.records.map(record => {
       const essay = record.get('essay')
       const user = record.get('user')
+      const likers = record.get('likers')
       return {
         ...essay.properties,
         id: essay.identity.toString(),
         user: {
           ...user.properties,
           id: user.identity.toString()
-        }
+        },
+        likersCount: likers.toString()
       }
     })
 
