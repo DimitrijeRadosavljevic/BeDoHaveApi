@@ -1,5 +1,5 @@
 import { int, Integer } from "neo4j-driver";
-import { driver, neo4j, THEME_TAG, USER_THEME } from "../../utils/db"
+import {driver, neo4j, THEME_TAG, USER_ESSAY_LIKES, USER_THEME, USER_THEME_LIKES} from "../../utils/db"
 import { Theme } from "./theme.model"
 
 
@@ -243,4 +243,47 @@ export const getThemesPaginate = async (session, userId, perPage, page, title, t
       return { themes, total}
     }
   });
+}
+
+
+// fetch theme, with owner
+export const getThemeDetail = async (session, themeId) => {
+  return session.readTransaction( async txc => {
+
+    const result = await txc.run(
+      `MATCH (user:User)-[:${USER_THEME}]->(theme:Theme) ` +
+      'WHERE ID(theme) = $themeId ' +
+      'RETURN user, theme',
+      {
+        themeId: neo4j.int(themeId)
+      }
+    )
+
+    const theme = result.records[0].get('theme')
+    const user = result.records[0].get('user')
+
+    return {
+      ...theme.properties,
+      id: theme.identity.toString(),
+      user: {
+        ...user.properties,
+        id: user.identity.toString()
+      }
+    }
+  })
+}
+
+export const getLikersCount = (session, themeId) => {
+  return session.readTransaction(async txc => {
+    const likersResult = await txc.run(
+      `MATCH (userLikesEssay:User)-[:${USER_THEME_LIKES}]->(theme:Theme) ` +
+      'WHERE ID(theme) = $themeId ' +
+      'WITH count(userLikesEssay) as likersCount ' +
+      'RETURN likersCount',
+      {
+        themeId: neo4j.int(themeId)
+      })
+
+    return likersResult.records[0].get('likersCount').toString()
+  })
 }

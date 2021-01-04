@@ -12,6 +12,8 @@ export const getSession = context => {
 }
 
 export const USER_THEME = 'Owns'
+export const USER_THEME_LIKES = 'Likes_Theme'
 export const USER_ESSAY = 'Wrote'
+export const USER_ESSAY_LIKES = 'Likes_Essay'
 export const THEME_ESSAY = 'Has'
 export const THEME_TAG = 'Tagged'

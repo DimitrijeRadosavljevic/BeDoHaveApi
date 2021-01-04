@@ -4,6 +4,7 @@ import { Essay } from "./essay.model";
 import {getSession} from "../../utils/db";
 import {respondError, respondSuccess} from "../../helpers/response";
 import { validationResult} from "express-validator";
+import {doesUserLikesEssay} from "../like/like.repository";
 
 
 const getEssays = async (req, res) => {
@@ -43,7 +44,7 @@ const postEssay = async (req, res) => {
   if (!usersTheme) respondError(res, null, 401)
 
   let essay = new Essay(null, req.body.title, req.body.content, req.body.date);
-  essay = await essayRepository.postEssay(getSession(req), essay, themeId)
+  essay = await essayRepository.postEssay(getSession(req), req.user.id, themeId, essay)
   return respondSuccess(res, essay, 201)
 }
 
@@ -73,6 +74,30 @@ const deleteEssay = async (req, res) => {
   return respondSuccess(res, null, 204)
 }
 
+const getEssayDetail = async (req, res) => {
+
+  const essayId = req.params.essayId
+
+  // TODO IF theme is public
+  // const theme = await essayRepository.getTheme(getSession(req), essayId)
+
+  const essay = await essayRepository.getEssayDetail(getSession(req), essayId);
+  essay.likersCount = await essayRepository.getEssayLikersCount(getSession(req), essayId);
+  essay.likedByUser = await doesUserLikesEssay(getSession(req), req.user.id, essayId)
+
+  return respondSuccess(res, essay, 200)
+}
+
+// returns essays and users that wrote them
+const getEssaysPublic = async (req, res) => {
+
+  // Check if theme is public
+  const themeId = req.params.themeId
+  const essays = await essayRepository.getEssaysWithUser(getSession(req), themeId, req.query.perPage, req.query.page)
+
+  respondSuccess(res, essays, 200)
+}
+
 const validateEssay = {
   title: {
     in: ['body'],
@@ -100,7 +125,9 @@ const validateEssay = {
 
 export const essayController = {
   getEssays,
+  getEssaysPublic,
   getEssay,
+  getEssayDetail,
   postEssay,
   putEssay,
   deleteEssay,
