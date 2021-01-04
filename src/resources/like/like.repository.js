@@ -7,7 +7,7 @@ export const userLikesTheme = async (session, userId, themeId) => {
 
     const likeRelationship = await txc.run(
       'MATCH (user:User), (theme:Theme) ' +
-      'where ID(user)=$userId and ID(theme)=themeId ' +
+      'where ID(user) = $userId AND ID(theme) = $themeId ' +
       `CREATE (user)-[relationship:${USER_THEME_LIKES}]->(theme) ` +
       'RETURN relationship',
       {
@@ -27,7 +27,7 @@ export const deleteUserLikesTheme = async (session, userId, themeId) => {
 
     const likeRelationship = await txc.run(
       `MATCH (user:User)-[relationship:${USER_THEME_LIKES}]->(theme:Theme) ` +
-      'where ID(user)=$userId and ID(theme)=themeId ' +
+      'where ID(user)=$userId and ID(theme) = $themeId ' +
       'DELETE relationship',
       {
         userId: neo4j.int(userId),
@@ -46,7 +46,7 @@ export const userLikesEssay = async (session, userId, essayId) => {
 
     const likeRelationship = await txc.run(
       'MATCH (user:User), (essay:Essay) ' +
-      'where ID(user)=$userId and ID(essay)=$essayId ' +
+      'where ID(user)=$userId and ID(essay) = $essayId ' +
       `CREATE (user)-[relationship:${USER_ESSAY_LIKES}]->(essay) ` +
       'RETURN relationship',
       {
@@ -88,6 +88,22 @@ export const doesUserLikesEssay = async (session, userId, essayId) => {
       {
         userId: neo4j.int(userId),
         essayId: neo4j.int(essayId)
+      }
+    )
+
+    return result.records[0].get('likes')
+  })
+}
+
+export const doesUserLikesTheme = async (session, userId, themeId) => {
+  return session.readTransaction(async txc => {
+    const result = await txc.run(
+      'MATCH (user:User), (theme:Theme) ' +
+      'WHERE ID(user) = $userId AND ID(theme) = $themeId ' +
+      `RETURN EXISTS( (user)-[:${USER_THEME_LIKES}]->(theme) ) as likes`,
+      {
+        userId: neo4j.int(userId),
+        themeId: neo4j.int(themeId)
       }
     )
 

@@ -3,6 +3,8 @@ import { getSession } from "../../utils/db"
 import {respondError, respondSuccess} from "../../helpers/response";
 import {Theme} from "./theme.model";
 import { validationResult } from   "express-validator";
+import * as essayRepository from "../essay/essay.repository";
+import {doesUserLikesTheme} from "../like/like.repository";
 
 export const getThemes = async (req, res) => {
 
@@ -80,6 +82,17 @@ export const putTheme = async (req, res) => {
 export const getThemesPaginate = async (req, res) => {
 
     const theme = await themeRepository.getThemesPaginate(getSession(req), req.user.id, req.query.perPage || 6, req.query.page || 1, req.query.title, req.query.tags);
+    return respondSuccess(res, theme, 200)
+}
+
+export const getThemePublic = async (req, res) => {
+    // TODO check if theme is public
+
+    const themeId = req.params.themeId
+    const theme = await themeRepository.getThemeDetail(getSession(req), themeId)
+    theme.likersCount = await themeRepository.getLikersCount(getSession(req), themeId)
+    theme.likedByUser = await doesUserLikesTheme(getSession(req), req.user.id, themeId)
+
     return respondSuccess(res, theme, 200)
 }
 
