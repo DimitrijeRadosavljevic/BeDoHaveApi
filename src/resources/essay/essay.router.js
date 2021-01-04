@@ -13,4 +13,8 @@ essayRouter.route('/essays/:essayId')
                   .get(essayController.getEssay)
                   .delete(essayController.deleteEssay)
 
+
+essayRouter.route('/essays/:essayId/detail')
+                  .get(essayController.getEssayDetail)
+
 essayRouter.put('/essays/:essayId', checkSchema(essayController.validateEssay), essayController.putEssay)
