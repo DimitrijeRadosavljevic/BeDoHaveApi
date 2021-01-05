@@ -13,7 +13,7 @@ themeRouter.route('/themes')
 themeRouter.route('/themes/:themeId')
     .get( themeController.getTheme )
     .delete( themeController.deleteTheme )
-    .put( themeController.putTheme )
+    .put(checkSchema(themeController.validateTheme), themeController.putTheme )
 
 themeRouter.route('/themes/:themeId/public')
   .get( themeController.getThemePublic )

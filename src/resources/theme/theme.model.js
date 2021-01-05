@@ -1,6 +1,6 @@
 export class Theme {
 
-    constructor(id, title, description, date, reminder, tags) {
+    constructor(id, title, description, date, reminder, tags, scheduleAnswer) {
         
         this.id = id;
         this.title = title;
@@ -8,5 +8,6 @@ export class Theme {
         this.date = date;
         this.reminder = reminder;
         this.tags = tags;
+        this.scheduleAnswer = scheduleAnswer;
     }
 }

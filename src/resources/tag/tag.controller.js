@@ -13,3 +13,4 @@ export const getThemeTags = async (req, res) => {
   const tags = await tagRepository.getThemeTags(getSession(req), req.params.themeId)
   return respondSuccess(res, tags, 200)
 }
+

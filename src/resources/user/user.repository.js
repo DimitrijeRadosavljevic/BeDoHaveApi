@@ -1,15 +1,17 @@
 import {neo4j} from "../../utils/db";
 import _ from 'lodash'
+import { User } from "./user.model";
 
 //post user
 exports.postUser = async (session, user) => {
 
   const result = await session.run(
-    'CREATE (a:User {name: $name, email: $email, password: $password}) RETURN a,ID(a)',
+    'CREATE (a:User {name: $name, email: $email, password: $password, surname: $surname}) RETURN a,ID(a)',
     {
       name: user.name,
       email: user.email,
-      password: user.password
+      password: user.password,
+      surname: user.surname
     }
   )
 
@@ -31,8 +33,8 @@ exports.getUser = async (session, id) => {
 
     const singleRecord = result.records[0]
     const user = singleRecord.get(0)
-    const userId = singleRecord.get(1).low;
-    return {...user.properties, id: userId}
+    const userId = singleRecord.get(0).identity.toString();
+    return new User(user.properties.name, user.properties.email, user.properties.surname, userId);
   });
 }
 

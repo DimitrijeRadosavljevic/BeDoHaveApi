@@ -45,7 +45,7 @@ export const postTheme = async (req, res) => {
     if (!errors.isEmpty()) {
         respondError(res, errors.array(), 400)
     }
-    let theme = new Theme(null, req.body.title, req.body.description, req.body.date, req.body.reminder, req.body.tags)
+    let theme = new Theme(null, req.body.title, req.body.description, req.body.date, req.body.reminder, req.body.tags, req.body.scheduleAnswer)
     theme = await themeRepository.postTheme(getSession(req), theme, req.user.id);
     if(theme != null)
         return respondSuccess(res, theme, 201);
@@ -81,11 +81,16 @@ export const putTheme = async (req, res) => {
         respondError(res, errors.array(), 400)
     }
     
-    const theme = await themeRepository.putTheme(getSession(req), req.user.id, req.params.themeId, req.body)
+    let tagNames = "";
+    req.body.tags.forEach(tag => {
+        tagNames += tag.name;
+    });
+    console.log(tagNames);
+    const theme = await themeRepository.putTheme(getSession(req), req.user.id, req.params.themeId, req.body, tagNames)
     if(theme != null)
-        res.status(200).send(theme)
+        respondSuccess(res, theme, 200);
     else 
-        res.status(404).send("Not Found")
+       respondError(res, "Not found", 404);
 }
 
 
@@ -120,4 +125,10 @@ export const validateTheme = {
         errorMessage: 'Parameter date must be of type Date'
       }
     }
+    // scheduleAnswer: {
+    //     in: ['body'],
+    //     isDate: {
+    //         errorMessage: 'ScheduleAnswer must be type Date',
+    //     }
+    //}
   }

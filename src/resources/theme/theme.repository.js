@@ -1,3 +1,4 @@
+import { forEach } from "lodash";
 import { int, Integer } from "neo4j-driver";
 import {driver, neo4j, THEME_TAG, USER_ESSAY_LIKES, USER_THEME, USER_THEME_LIKES} from "../../utils/db"
 import { Theme } from "./theme.model"
@@ -64,7 +65,7 @@ exports.postTheme = async (session, theme, userId) => {
                 description: theme.description,
                 date: theme.date,
                 reminder: theme.reminder,
-                scheduleAnswer: null
+                scheduleAnswer: theme.scheduleAnswer
             }
         )
 
@@ -108,23 +109,47 @@ exports.postTheme = async (session, theme, userId) => {
     })
 }
 
-exports.putTheme = async (session, userId, themeId, theme) => {
+exports.putTheme = async (session, userId, themeId, theme, tagNames) => {
 
     return session.writeTransaction(async txc => {
         const result = await txc.run(
-            `MATCH (a:Theme)<-[${USER_THEME}]-(c:User) where ID(a) = $themeId and ID(c) = $userId SET a.date = $date, a.description = $description, a.title = $title RETURN a,ID(a)`,
+            `MATCH (a:Theme)<-[${USER_THEME}]-(c:User) where ID(a) = $themeId and ID(c) = $userId SET a.date = $date, a.description = $description, a.title = $title, a.reminder = $reminder RETURN a,ID(a)`,
             {
                 themeId: neo4j.int(themeId),
                 userId: neo4j.int(userId),
                 date: theme.date,
                 description: theme.description,
-                title: theme.title
+                title: theme.title,
+                reminder: theme.reminder
             }
         )
 
         if(result.records.length == 0) {
-            return null
+          return null
         }
+
+        const response = await txc.run(
+          `MATCH (theme:Theme)-[relationship:${THEME_TAG}]->() WHERE ID(theme)= $themeId DELETE relationship RETURN relationship`,
+          {
+            themeId: neo4j.int(themeId)
+          }
+        )
+
+        // if(response.get('errors')){
+        //   return null
+        // }
+          const newTags = await txc.run(
+            `MATCH (theme:Theme), (tag:Tag) WHERE ID(theme)=$themeId and $tagNames CONTAINS tag.name CREATE (theme)-[relationship:${THEME_TAG}]->(tag) RETURN relationship`,
+            {
+              themeId: neo4j.int(themeId),
+              tagNames: tagNames
+            }
+          )
+
+          if(tagNames != "" && newTags.records.length == 0){
+            return null
+          }
+
         const singleRecord = result.records[0]
         const themeFromDatabase = singleRecord.get(0).properties
         const Id = singleRecord.get(0).identity.toString()
@@ -219,7 +244,7 @@ export const getThemesPaginate = async (session, userId, perPage, page, title, t
         'and theme.title CONTAINS $title '+
         'WITH collect(theme) as themes, count(theme) as total ' +
         'UNWIND themes as theme ' +
-        'RETURN theme, total ' +
+        'RETURN DISTINCT theme, total ' +
         'ORDER BY theme.date DESC ' +
         'SKIP $skip ' +
         'LIMIT $limit',
