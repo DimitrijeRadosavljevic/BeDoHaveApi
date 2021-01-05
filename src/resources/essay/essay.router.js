@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { essayController } from "./essay.controller";
-import {check, checkSchema} from "express-validator";
+import { checkSchema } from "express-validator";
 
 export const essayRouter = new Router()
 

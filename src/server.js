@@ -6,6 +6,7 @@ import { themeRouter } from './resources/theme/theme.router'
 import { essayRouter } from './resources/essay/essay.router'
 import { tagRouter } from "./resources/tag/tag.router";
 import { likeRouter } from "./resources/like/like.router";
+import { habitRouter } from "./resources/habit/habit.router";
 import authRouter from "./utils/auth/auth.router"
 import cors from 'cors'
 
@@ -34,6 +35,7 @@ app.use('/api', themeRouter);
 app.use('/api', essayRouter);
 app.use('/api', tagRouter);
 app.use('/api', likeRouter);
+app.use('/api', habitRouter);
 
 
 
