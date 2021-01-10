@@ -1,4 +1,4 @@
-import {neo4j, USER_HABIT} from "../../utils/db";
+import { HABIT_TAG, neo4j, USER_HABIT} from "../../utils/db";
 
 
 export const getHabits = async (session, userId, perPage, page) => {
@@ -6,7 +6,8 @@ export const getHabits = async (session, userId, perPage, page) => {
     const result = await txc.run(
       `MATCH (user:User)-[:${USER_HABIT}]->(habit:Habit) ` +
       'WHERE ID(user) = $userId ' +
-      'WITH habit, count(habit) as total ' +
+      'WITH collect(habit) as habits, count(habit) as total ' +
+      'UNWIND habits as habit ' +
       'RETURN habit, total ' +
       'ORDER BY habit.name DESC ' +
       'SKIP $skip ' +
@@ -16,12 +17,15 @@ export const getHabits = async (session, userId, perPage, page) => {
         skip: neo4j.int((page - 1) * perPage),
         limit: neo4j.int(perPage),
       })
+
+
     if (result.records.length == 0) {
       return {habits: new Array, total: 0}
     }
 
     const habits = result.records.map(record => {
       const habit = record.get('habit')
+
       return {
         ...habit.properties,
         id: habit.identity.toString()
@@ -40,10 +44,13 @@ export const getHabit = async (session, habitId) => {
     const result = await txc.run(
       'MATCH (habit:Habit) ' +
       'WHERE ID(habit) = $habitId ' +
-      'RETURN habit',
+      `OPTIONAL MATCH (habit)-[:${HABIT_TAG}]->(tag:Tag) ` +
+      'WITH habit, collect(tag) as tags ' +
+      'RETURN habit, tags',
       {
         habitId: neo4j.int(habitId)
       })
+
 
     if (result.records.length == 0) {
       return null
@@ -51,19 +58,41 @@ export const getHabit = async (session, habitId) => {
 
 
     const habit = result.records[0].get('habit')
-    return {...habit.properties, id: habit.identity.toString()}
+    const tags = result.records[0].get('tags').map(tag => {
+      return {
+        ...tag.properties,
+        id: tag.identity.toString()
+      }
+    })
+
+    return {
+      ...habit.properties,
+      id: habit.identity.toString(),
+      tags
+    }
   });
 }
 
 
 export const postHabit = async (session, userId, habit) => {
 
+  habit.date = new Date()
+
   return session.writeTransaction(async txc => {
     const result = await txc.run(
-      'CREATE (habit:Habit {name: $name}) ' +
+      'CREATE (habit:Habit { ' +
+          'name: $name, ' +
+          'description: $description, ' +
+          'frequency: $frequency, ' +
+          'frequencySpecific: $frequencySpecific }) ' +
+          // 'date: date($date) }) ' +
+          // 'date: date({year: $dateYear, month: $dateMonth, day: $dateDay}) }) ' +
       'RETURN habit',
       {
-        name: habit.name
+        name: habit.name,
+        description: habit.description,
+        frequency: habit.frequency,
+        frequencySpecific: habit.frequencySpecific
       }
     )
 
@@ -73,7 +102,7 @@ export const postHabit = async (session, userId, habit) => {
 
     const habitResult = result.records[0].get('habit')
 
-    const themeRelationship = await txc.run(
+    const habitRelationship = await txc.run(
       'MATCH (user:User), (habit:Habit) ' +
       'WHERE ID(user) = $userId and ID(habit) = $habitId ' +
       `CREATE (user)-[relationship:${USER_HABIT}]->(habit) ` +
@@ -84,9 +113,25 @@ export const postHabit = async (session, userId, habit) => {
       }
     );
 
-    if (themeRelationship.records.length == 0) {
+    if (habitRelationship.records.length == 0) {
       // TODO handle error
     }
+
+    habit.tags.map(async tag => {
+      const relationship = await txc.run(
+        'MATCH (habit:Habit), (tag:Tag) ' +
+        'WHERE ID(habit) = $habitId and ID(tag) = $tagId ' +
+        `CREATE (habit)-[relationship:${HABIT_TAG}]->(tag) ` +
+        'RETURN relationship',
+        {
+          habitId: habitResult.identity,
+          tagId: neo4j.int(tag.id)
+        }
+      )
+      if(relationship.recordslength == 0) {
+        return null
+      }
+    })
 
     return {...habitResult.properties, id: habitResult.identity.toString()}
   });
@@ -95,7 +140,7 @@ export const postHabit = async (session, userId, habit) => {
 
 export const putHabit = async (session, habit) => {
   return session.writeTransaction(async txc => {
-    const result = await txc.run(
+    const habitResult = await txc.run(
       'MATCH (habit:Habit) ' +
       'WHERE ID(habit) = $habitId ' +
       'SET habit.name = $name ' +
@@ -106,11 +151,37 @@ export const putHabit = async (session, habit) => {
       }
     );
 
-    if (result.records.length == 0) {
+    if (habitResult.records.length == 0) {
       // TODO (handle error)
     }
 
-    const habitUpdated = result.records[0].get('habit')
+    const r = await txc.run(
+      `MATCH (habit:Habit)-[relationship:${HABIT_TAG}]->(:Tag) ` +
+      'WHERE ID(habit) = $habitId ' +
+      'DELETE relationship ',
+      {
+        habitId: neo4j.int(habit.id),
+        name: habit.name,
+      }
+    );
+
+    habit.tags.map(async tag => {
+      const relationship = await txc.run(
+        'MATCH (habit:Habit), (tag:Tag) ' +
+        'WHERE ID(habit) = $habitId and ID(tag) = $tagId ' +
+        `CREATE (habit)-[relationship:${HABIT_TAG}]->(tag) ` +
+        'RETURN relationship',
+        {
+          habitId: habitResult.identity,
+          tagId: neo4j.int(tag.id)
+        }
+      )
+      if(relationship.recordslength == 0) {
+        return null
+      }
+    })
+
+    const habitUpdated = habitResult.records[0].get('habit')
     return {...habitUpdated.properties, id: habitUpdated.identity.toString()}
   });
 }
