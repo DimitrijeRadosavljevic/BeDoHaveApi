@@ -6,6 +6,7 @@ import { validationResult } from   "express-validator";
 import { getThemeTags } from "../tag/tag.repository";
 import * as essayRepository from "../essay/essay.repository";
 import {doesUserLikesTheme} from "../like/like.repository";
+import { trimSingleQuotes } from "tslint/lib/utils";
 
 export const getThemes = async (req, res) => {
 
@@ -96,7 +97,7 @@ export const putTheme = async (req, res) => {
 
 export const getThemesPaginate = async (req, res) => {
 
-    const theme = await themeRepository.getThemesPaginate(getSession(req), req.user.id, req.query.perPage || 6, req.query.page || 1, req.query.title, req.query.tags);
+    const theme = await themeRepository.getThemesPaginate(getSession(req), req.user.id, req.query.perPage || 6, req.query.page || 1, req.query.title, req.query.tags, req.query.filterOverdueThemesDate);
     return respondSuccess(res, theme, 200)
 }
 
@@ -109,6 +110,33 @@ export const getThemePublic = async (req, res) => {
     theme.likedByUser = await doesUserLikesTheme(getSession(req), req.user.id, themeId)
 
     return respondSuccess(res, theme, 200)
+}
+
+export const getOverdueThemes = async (req, res) => {
+
+    const overdueThemes = await themeRepository.getOverdueThemes(getSession(req), req.user.id, req.query.currentDate);
+    return respondSuccess(res, overdueThemes, 200);
+}
+
+export const publishTheme = async (req, res) => {
+
+    const themeId = req.params.themeId;
+    if(!themeId) respondError(res, "Theme id is reqired");
+
+    const userTheme = await themeRepository.userOwnsTheme(getSession(req), req.user.id, themeId);
+    if(!userTheme) return respondError(res, "Unauthorized", 401);
+
+    const theme = await themeRepository.publishTheme(getSession(req), req.user.id, req.body);
+    if(theme != null) {
+        return respondSuccess(res, theme, 200);
+    } else {
+        return respondError(res, theme, 404);
+    }
+}
+
+export const getPublicThemes = async (req, res) => {
+    const publicThemes = await themeRepository.getPublicThemes(getSession(req), req.query.perPage || 6, req.query.page || 1, req.query.title, req.query.tags)
+    return respondSuccess(res, publicThemes, 200);
 }
 
 export const validateTheme = {
