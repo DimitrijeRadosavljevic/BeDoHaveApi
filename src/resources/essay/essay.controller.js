@@ -83,7 +83,8 @@ const getEssayDetail = async (req, res) => {
 
   const essay = await essayRepository.getEssayDetail(getSession(req), essayId);
   essay.likersCount = await essayRepository.getEssayLikersCount(getSession(req), essayId);
-  essay.likedByUser = await doesUserLikesEssay(getSession(req), req.user.id, essayId)
+  essay.likedByUser = await doesUserLikesEssay(getSession(req), req.user.id, essayId);
+  essay.ownedByUser = await essayRepository.userOwnsEssay(getSession(req), req.user.id, essayId);
 
   return respondSuccess(res, essay, 200)
 }

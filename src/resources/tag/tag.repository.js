@@ -16,7 +16,6 @@ export const getTags = async (session, name) => {
     if (result.records.length == 0) {
       return { tags: new Array() }
     }
-
     const tags = result.records.map(record => {
       const tag = record.get('tag')
       return {...tag.properties, id: tag.identity.toString() }

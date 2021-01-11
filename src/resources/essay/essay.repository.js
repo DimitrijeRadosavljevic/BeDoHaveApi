@@ -151,7 +151,7 @@ export const deleteEssay = async (session, essayId) => {
 exports.userOwnsEssay = async (session, userId, essayId) => {
   return session.readTransaction(async txc => {
     const result = await txc.run(
-      `MATCH (user:User)-[:${USER_THEME}]->(theme:Theme)-[:${THEME_ESSAY}]->(essay:Essay) ` +
+      `MATCH (user:User)-[:${USER_ESSAY}]->(essay:Essay) ` +
       'WHERE ID(user) = $userId AND  ID(essay) = $essayId ' +
       'RETURN essay',
       {
