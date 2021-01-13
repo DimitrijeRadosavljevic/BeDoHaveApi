@@ -15,3 +15,6 @@ habitRouter.route('/habits/:habitId')
                   .delete(habitController.deleteHabit)
 
 habitRouter.put('/habits/:habitId', checkSchema(habitController.validateHabit), habitController.putHabit)
+
+habitRouter.route('/habits/:habitId/statistics')
+                  .get(habitController.getHabitStatistics)

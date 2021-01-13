@@ -1,4 +1,5 @@
 import {HABIT_COMPLETED, neo4j } from "../../utils/db";
+import {session} from "neo4j-driver";
 
 
 export const getHabitRecords = async (session, habitId, perPage, page) => {
@@ -72,7 +73,11 @@ export const postHabitRecord = async (session, habitId, habitRecord) => {
       // TODO handle error
     }
 
-    return {...habitRecordResult.properties, id: habitRecordResult.identity.toString()}
+    return {
+      id: habitRecordResult.identity.toString(),
+      ...habitRecordResult.properties,
+      date: habitRecordResult.properties.date.toString()
+    }
   });
 }
 
@@ -97,7 +102,11 @@ export const putHabitRecord = async (session, habitRecord) => {
     }
 
     const habitRecordUpdated = habitRecordResult.records[0].get('habitRecord')
-    return {...habitRecordUpdated.properties, id: habitRecordUpdated.identity.toString()}
+    return {
+      id: habitRecordUpdated.identity.toString(),
+      ...habitRecordUpdated.properties,
+      date: habitRecordUpdated.properties.date.toString()
+    }
   });
 }
 
