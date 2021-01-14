@@ -1,8 +1,10 @@
 import * as userRepository from "../../resources/user/user.repository";
 import {newToken, verifyToken, createHashPassword, checkPassword} from "./auth.service";
-import { getSession } from "../db";
+import { createClient, getSession } from "../db";
 import {respondError} from "../../helpers/response";
 import {validationResult} from "express-validator";
+import { getJSDocImplementsTags } from "typescript";
+import * as notificationSystem from "../../resources/notificationSystem/notificationRedis"
 
 const login = async (req, res) => {
   const errors = validationResult(req)
@@ -33,6 +35,8 @@ const register = async (req, res) => {
     req.body.password = hash;
     const registeredUser = await userRepository.postUser(getSession(req), req.body);
     const token = newToken(registeredUser);
+
+    notificationSystem.subscribeOnChanel(createClient(req), registeredUser.id);
     res.status(201).send({token, data: registeredUser});
   }
   else {
@@ -53,7 +57,7 @@ const protect = async (req, res, next) => {
   }
 
   const user = await userRepository.getUser(getSession(req), payload.id);
-  req.user = user
+  req.user = user;
   next()
 }
 

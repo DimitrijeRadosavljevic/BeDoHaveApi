@@ -465,3 +465,90 @@ export const getPublicThemes = async (session, perPage, page, title, tags) => {
     }
   });
 }
+
+export const getPublicThemesRedis = async (client, perPage, page) => {
+  
+  return new Promise((resolve, reject) => {
+
+    client.lrange('publicThemes', (page-1)*perPage, (page*perPage)-1, (err, publicThemes) => {
+      if(err) return reject(err)
+
+      const themes = [];
+      publicThemes.forEach(theme => {
+      themes.push(JSON.parse(theme));
+      });
+
+      let total;
+      client.get('totalPublicThemes',(err, totalPublicThemes) => {
+        total = parseInt(totalPublicThemes);
+        return resolve ({ themes, total });
+      }) 
+    });
+  })
+}
+
+// export const setPublicThemesRedis = async (client, allPublicThemes) => {
+//   return new Promise((resolve, reject) => {
+
+//     client.lpush('publicThemes', JSON.stringify(...allPublicThemes.themes));
+//       //return resolve ("success")
+//     //else 
+//       //return reject ("error")
+//   })
+// }
+export const getAllPublicThemes = async (session) => {
+  return session.readTransaction(async txc => {
+        const result = await txc.run(
+        `MATCH (theme:Theme) WHERE theme.public = $publish RETURN theme`,
+        {
+          publish: true
+
+        })
+
+        if(result.records.length == 0) {
+          return { themes: new Array() }
+        }
+
+        const themes = result.records.map(record => {
+          const theme = record.get('theme')
+          return {...theme.properties, id: theme.identity.toString(), scheduleAnswer: theme.properties.scheduleAnswer.year.toString()+"-"+theme.properties.scheduleAnswer.month.toString()+"-"+theme.properties.scheduleAnswer.day.toString()} 
+        })
+
+        return { themes }
+  })
+}
+
+export const themeOwner = async (session, themeId) => {
+  return session.readTransaction(async txc => {
+        const result = await txc.run(
+        `MATCH (user:User)-[:${USER_THEME}]->(theme:Theme) WHERE ID(theme)= $themeId RETURN user`,
+        {
+          themeId: neo4j.int(themeId)
+        })
+
+        if(result.records.length == 0) {
+          return null
+        }
+
+        const user = result.records[0].get('user');
+        return { ...user.properties, id: user.identity.toString() }
+  })
+}
+
+export const themeExist = async (session, themeId) => {
+  return session.readTransaction(async txc => {
+        const result = await txc.run(
+        `MATCH (theme:Theme) WHERE ID(theme)= $themeId RETURN theme`,
+        {
+          themeId: neo4j.int(themeId)
+        })
+
+        if(result.records.length == 0) {
+          return null
+        }
+
+        const theme = result.records[0].get('theme');
+        return { ...theme.properties, id: theme.identity.toString() }
+  })
+}
+

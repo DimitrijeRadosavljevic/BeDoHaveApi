@@ -142,8 +142,7 @@ export const deleteEssay = async (session, essayId) => {
         essayId: neo4j.int(essayId)
       }
     );
-
-    console.log(result)
+    
     // TODO (check result object when deleting node)
   });
 }

@@ -10,11 +10,19 @@ import { habitRouter } from "./resources/habit/habit.router";
 import { habitRecordRouter } from "./resources/habit-record/habit-record.router";
 import authRouter from "./utils/auth/auth.router"
 import cors from 'cors'
+import { notificationRouter } from './resources/notification/notification.router'
 
 const port = 3000;
 
 export const app = express()
+var server = require('http').Server(app);
+export var io = require('socket.io')(server, {
+  cors: {
+    origin: '*',
+  }
+});
 
+export let soketId = 0;
 // So no one knows api is powered by express
 app.disable('x-powered-by')
 
@@ -26,6 +34,16 @@ app.use(urlencoded({extended: true}))
 // Logging middleware, example POST /next 200 5.868 ms - 19
 app.use(morgan('dev'))
 
+// io.on('connection', function( socket ) {
+//   console.log("Conected");
+//   socket.emit('test', "Slovca");
+//   socket.on('povezano', (data) => {
+//     console.log(data);
+//   })
+
+//   soketId = socket.id;
+//   console.log(soketId);
+// })
 
 
 app.use('/', authRouter)
@@ -38,12 +56,13 @@ app.use('/api', tagRouter);
 app.use('/api', likeRouter);
 app.use('/api', habitRouter);
 app.use('/api', habitRecordRouter);
+app.use('/api', notificationRouter);
 
 
 
 
 export const start = () => {
-  app.listen(port, () => {
+  return server.listen(port, () => {
     console.log(`BeDoHave api listening on http://localhost:${port}/api`)
   })
 }

@@ -1,7 +1,9 @@
 import * as essayRepository from './essay.repository'
+import * as themeRepository from '../theme/theme.repository'
+import * as notificationSystem from "../notificationSystem/notificationRedis"
 import { userOwnsTheme } from '../theme/theme.repository'
 import { Essay } from "./essay.model";
-import {getSession} from "../../utils/db";
+import {createClient, getSession} from "../../utils/db";
 import {respondError, respondSuccess} from "../../helpers/response";
 import { validationResult} from "express-validator";
 import {doesUserLikesEssay} from "../like/like.repository";
@@ -40,9 +42,21 @@ const postEssay = async (req, res) => {
   const themeId = req.params.themeId;
   if (!themeId) respondError(res, 'Theme id is required', 400)
 
-  const usersTheme = await userOwnsTheme(getSession(req), req.user.id, themeId)
-  if (!usersTheme) respondError(res, null, 401)
+  const theme = await  themeRepository.themeExist(getSession(req), themeId);
+  if(theme == null) {
+     return respondError(res, "Theme not exist", 404);
+  }
 
+  //const usersTheme = await userOwnsTheme(getSession(req), req.user.id, themeId)
+  //if (!usersTheme) respondError(res, null, 401)
+
+  const themeOwner = await themeRepository.themeOwner(getSession(req), themeId);
+  if(themeOwner.id != req.user.id && theme.public == false) {
+    return respondError(res, "Theme is now private", 400);
+  } 
+  if(themeOwner.id != req.user.id) {
+    notificationSystem.publishOnChanel(createClient(req), themeOwner.id, `User:${req.user.email} write on your theme ${theme.title}`);
+  }
   let essay = new Essay(null, req.body.title, req.body.content, req.body.date);
   essay = await essayRepository.postEssay(getSession(req), req.user.id, themeId, essay)
   return respondSuccess(res, essay, 201)

@@ -1,5 +1,5 @@
 import * as themeRepository from "./theme.repository"
-import { getSession } from "../../utils/db"
+import { createClient, getSession } from "../../utils/db"
 import {respondError, respondSuccess} from "../../helpers/response";
 import {Theme} from "./theme.model";
 import { validationResult } from   "express-validator";
@@ -7,6 +7,8 @@ import { getThemeTags } from "../tag/tag.repository";
 import * as essayRepository from "../essay/essay.repository";
 import {doesUserLikesTheme} from "../like/like.repository";
 import { trimSingleQuotes } from "tslint/lib/utils";
+import { io, soketId } from "../../server";
+import { postNotification } from "../notification/notification.repository";
 
 export const getThemes = async (req, res) => {
 
@@ -96,14 +98,14 @@ export const putTheme = async (req, res) => {
 
 
 export const getThemesPaginate = async (req, res) => {
-
+    //io.sockets.emit('69Notification', "Slovca354");
+    //const notification = await postNotification(getSession(req), "66", "354");
     const theme = await themeRepository.getThemesPaginate(getSession(req), req.user.id, req.query.perPage || 6, req.query.page || 1, req.query.title, req.query.tags, req.query.filterOverdueThemesDate);
     return respondSuccess(res, theme, 200)
 }
 
 export const getThemePublic = async (req, res) => {
     // TODO check if theme is public
-
     const themeId = req.params.themeId
     const theme = await themeRepository.getThemeDetail(getSession(req), themeId)
     theme.likersCount = await themeRepository.getLikersCount(getSession(req), themeId)
@@ -136,7 +138,28 @@ export const publishTheme = async (req, res) => {
 
 export const getPublicThemes = async (req, res) => {
     const publicThemes = await themeRepository.getPublicThemes(getSession(req), req.query.perPage || 6, req.query.page || 1, req.query.title, req.query.tags)
+;
+    // const allPublicThemes = await themeRepository.getAllPublicThemes(getSession(req));
+    // const client = createClient(req);
+    // const response = await client.rpush('publicThemes', JSON.stringify(...allPublicThemes.themes));
+    //                  await client.expire('publicThemes', 3600);
+    // const response2 = await client.set('totalPublicThemes', allPublicThemes.themes.length);
+    //                   await client.expire('totalPublicThemes', 3600);
+    // const themes = await themeRepository.getPublicThemesRedis(client, parseInt(req.query.perPage), parseInt(req.query.page));
+
+    // console.log("Neo4j");
     return respondSuccess(res, publicThemes, 200);
+}
+
+export const getPublicThemesRedis = async (req, res, next) => {
+
+    const publicThemes = await themeRepository.getPublicThemesRedis(createClient(req), parseInt(req.query.perPage), parseInt(req.query.page));
+    if(publicThemes.themes.length != 0) {
+        console.log(publicThemes, "Redis");
+        return respondSuccess(res, publicThemes, 200)
+    } else {
+        next();
+    }
 }
 
 export const validateTheme = {
