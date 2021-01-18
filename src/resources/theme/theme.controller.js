@@ -111,6 +111,11 @@ export const getThemePublic = async (req, res) => {
     theme.likersCount = await themeRepository.getLikersCount(getSession(req), themeId)
     theme.likedByUser = await doesUserLikesTheme(getSession(req), req.user.id, themeId)
 
+    const redisClient = createClient(req)
+    theme.tags.forEach(tag => {
+        redisClient.zincrby(`users:${req.user.id}:tags`, 1, tag.id)
+    });
+
     return respondSuccess(res, theme, 200)
 }
 
@@ -162,6 +167,17 @@ export const getPublicThemesRedis = async (req, res, next) => {
     }
 }
 
+export const getPersonalizedThemes = async (req, res) => {
+    const redisClient = createClient(req)
+
+    return redisClient.zrange(`users:${req.user.id}:tags`, 0, -1, async (err, items) => {
+        const data = await themeRepository.getPersonalizedThemes(getSession(req), items, req.query.page, req.query.perPage)
+
+        // return res.send(data);
+        return respondSuccess(res, data, 200)
+    })
+}
+
 export const validateTheme = {
     title: {
       in: ['body'],
@@ -183,3 +199,6 @@ export const validateTheme = {
     //     }
     //}
   }
+
+
+
