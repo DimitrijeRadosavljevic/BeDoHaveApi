@@ -22,3 +22,6 @@ themeRouter.route('/themes/:themeId/public')
     .put( themeController.publishTheme )
 themeRouter.route('/themes/public/getPublicThemes')
     .get( /*themeController.getPublicThemesRedis,*/ themeController.getPublicThemes )
+
+themeRouter.route('/themes-personalized')
+    .get(themeController.getPersonalizedThemes)

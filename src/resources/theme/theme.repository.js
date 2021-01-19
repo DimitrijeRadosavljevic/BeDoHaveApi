@@ -293,7 +293,9 @@ export const getThemeDetail = async (session, themeId) => {
     const result = await txc.run(
       `MATCH (user:User)-[:${USER_THEME}]->(theme:Theme) ` +
       'WHERE ID(theme) = $themeId ' +
-      'RETURN user, theme',
+      `OPTIONAL MATCH (theme)-[:${THEME_TAG}]-(tag:Tag) ` +
+      'WITH theme, user, collect(tag) as tags ' +
+      'RETURN user, theme, tags',
       {
         themeId: neo4j.int(themeId)
       }
@@ -301,6 +303,12 @@ export const getThemeDetail = async (session, themeId) => {
 
     const theme = result.records[0].get('theme')
     const user = result.records[0].get('user')
+    const tags = result.records[0].get('tags').map(tag => {
+      return {
+        id: tag.identity.toString(),
+        ...tag.properties
+      }
+    })
 
     return {
       ...theme.properties,
@@ -308,7 +316,8 @@ export const getThemeDetail = async (session, themeId) => {
       user: {
         ...user.properties,
         id: user.identity.toString()
-      }
+      },
+      tags: tags
     }
   })
 }
@@ -572,4 +581,46 @@ export const updateThemeScheduleAnswer = async (session, userId, themeId, schedu
   })
 }
 
+
+export const getPersonalizedThemes = async (session, tags, page, perPage) => {
+  tags = tags.map(tag => {
+    return neo4j.int(tag)
+  })
+
+  return session.readTransaction(async txc => {
+    const result = await txc.run(
+      `MATCH (theme:Theme)-[:${THEME_TAG}]->(tag:Tag) ` +
+      'WHERE theme.public = $publish ' +
+      'AND ID(tag) IN $tags ' +
+      'WITH collect(theme) as themes, count(theme) as total ' +
+      'UNWIND themes as theme ' +
+      'RETURN DISTINCT theme, total ' +
+      'ORDER BY theme.date DESC ' +
+      'SKIP $skip ' +
+      'LIMIT $limit',
+      {
+        skip: neo4j.int((page - 1) * perPage),
+        limit: neo4j.int(perPage),
+        tags: tags,
+        publish: true
+      }
+    )
+
+    if (result.records.length == 0) {
+      return { themes: new Array, total: 0 }
+    }
+
+    const themes = result.records.map(record => {
+      const theme = record.get('theme')
+      return {
+        ...theme.properties,
+        id: theme.identity.toString(),
+        scheduleAnswer: theme.properties.scheduleAnswer.year.toString()+"-"+theme.properties.scheduleAnswer.month.toString()+"-"+theme.properties.scheduleAnswer.day.toString()
+      }
+    })
+
+    const total = parseInt(result.records[0].get('total').toString())
+    return { themes, total}
+  })
+}
 

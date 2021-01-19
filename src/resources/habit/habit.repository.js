@@ -203,6 +203,16 @@ export const putHabit = async (session, habit) => {
 export const deleteHabit = async (session, habitId) => {
 
   return session.writeTransaction(async txc => {
+    const deleteHabitRecords = await txc.run(
+      `MATCH (habit:Habit)-[:${HABIT_COMPLETED}]->(habitRecord:HabitRecord) ` +
+      'WHERE ID(habit) = $habitId ' +
+      'DETACH DELETE habitRecord',
+      {
+        habitId: neo4j.int(habitId)
+      }
+    );
+
+
     const result = await txc.run(
       'MATCH (habit:Habit) ' +
       'WHERE ID(habit) = $habitId ' +
