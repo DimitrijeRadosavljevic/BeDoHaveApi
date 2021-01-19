@@ -34,9 +34,10 @@ export const getEssays = async (session, themeId, perPage, page) => {
 export const getEssay = async (session, essayId) => {
   return session.readTransaction(async txc => {
     const result = await txc.run(
-      'MATCH (essay:Essay) ' +
+      `MATCH (theme:Theme)-[:${THEME_ESSAY}]->(essay:Essay) ` +
       'WHERE ID(essay) = $essayId ' +
-      'RETURN essay',
+      'WITH theme, essay '+
+      'RETURN essay, theme',
       {
         essayId: neo4j.int(essayId)
       })
@@ -47,7 +48,8 @@ export const getEssay = async (session, essayId) => {
 
 
     const essay = result.records[0].get('essay')
-    return {...essay.properties, id: essay.identity.toString()}
+    const theme = result.records[0].get('theme')
+    return {...essay.properties, id: essay.identity.toString(), theme: theme.properties}
   });
 }
 
@@ -287,6 +289,40 @@ export const getTheme = (session, essayId) => {
       ...theme.properties,
       id: theme.identity.toString()
     }
+  })
+}
+
+export const essayOwner = async (session, essayId) => {
+  return session.readTransaction(async txc => {
+        const result = await txc.run(
+        `MATCH (user:User)-[:${USER_ESSAY}]->(essay:Essay) WHERE ID(essay)= $essayId RETURN user`,
+        {
+         essayId: neo4j.int(essayId)
+        })
+
+        if(result.records.length == 0) {
+          return null
+        }
+
+        const user = result.records[0].get('user');
+        return { ...user.properties, id: user.identity.toString() }
+  })
+}
+
+export const essayExist = async (session, essayId) => {
+  return session.readTransaction(async txc => {
+        const result = await txc.run(
+        `MATCH (essay:Essay) WHERE ID(essay)= $essayId RETURN essay`,
+        {
+          essayId: neo4j.int(essayId)
+        })
+
+        if(result.records.length == 0) {
+          return null
+        }
+
+        const essay = result.records[0].get('essay');
+        return { ...essay.properties, id: essay.identity.toString() }
   })
 }
 

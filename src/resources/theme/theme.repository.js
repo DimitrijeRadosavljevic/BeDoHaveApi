@@ -552,3 +552,24 @@ export const themeExist = async (session, themeId) => {
   })
 }
 
+export const updateThemeScheduleAnswer = async (session, userId, themeId, scheduleAnswer) => {
+  
+  return session.writeTransaction(async txc => {
+        const result = await txc.run(
+        `WITH split($scheduleAnswer, "-") as dateParts MATCH (user:User)-[:${USER_THEME}]->(theme:Theme) WHERE ID(user)= $userId and ID(theme)= $themeId SET theme.scheduleAnswer = date({year: toInteger(dateParts[0]), month: toInteger(dateParts[1]), day: toInteger(dateParts[2])}) RETURN theme`,
+        {
+          themeId: neo4j.int(themeId),
+          userId: neo4j.int(userId),
+          scheduleAnswer: scheduleAnswer
+        })
+
+        if(result.records.length == 0) {
+          return null
+        }
+
+        const theme = result.records[0].get('theme');
+        return { ...theme.properties, id: theme.identity.toString() }
+  })
+}
+
+

@@ -151,6 +151,15 @@ export const getPublicThemes = async (req, res) => {
     return respondSuccess(res, publicThemes, 200);
 }
 
+export const updateThemeScheduleAnswer = async (req, res) => {
+    console.log("Tema");
+    const theme = await themeRepository.updateThemeScheduleAnswer(getSession(req), req.user.id, req.params.themeId, req.body.scheduleAnswer);
+    if(theme != null)
+        return respondSuccess(res, theme, 201);
+    else 
+        return respondError(res, "Theme not updated", 500);
+}
+
 export const getPublicThemesRedis = async (req, res, next) => {
 
     const publicThemes = await themeRepository.getPublicThemesRedis(createClient(req), parseInt(req.query.perPage), parseInt(req.query.page));
