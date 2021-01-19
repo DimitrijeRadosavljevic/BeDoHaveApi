@@ -19,7 +19,7 @@ export const seedTags = async () => {
     return result.records[0].get('count').toString()
   });
 
-  if (numberOfTags != tags.length) {
+  if (numberOfTags < 10) {
     session.writeTransaction(async txc => {
       tags.forEach(tag => {
         txc.run('CREATE (tag:Tag { name: $name })', {name: tag})

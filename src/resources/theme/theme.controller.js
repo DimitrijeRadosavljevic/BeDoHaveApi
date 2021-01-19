@@ -179,7 +179,7 @@ export const getPublicThemesRedis = async (req, res, next) => {
 export const getPersonalizedThemes = async (req, res) => {
     const redisClient = createClient(req)
 
-    return redisClient.zrange(`users:${req.user.id}:tags`, 0, -1, async (err, items) => {
+    return redisClient.zrevrange(`users:${req.user.id}:tags`, '0', '-1', async (err, items) => {
         const data = await themeRepository.getPersonalizedThemes(getSession(req), items, req.query.page, req.query.perPage)
 
         // return res.send(data);
