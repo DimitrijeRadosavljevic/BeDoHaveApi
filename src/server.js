@@ -11,6 +11,7 @@ import { habitRecordRouter } from "./resources/habit-record/habit-record.router"
 import authRouter from "./utils/auth/auth.router"
 import cors from 'cors'
 import { notificationRouter } from './resources/notification/notification.router'
+import { seedTags } from "./utils/tag.seeder";
 
 const port = 3000;
 
@@ -59,10 +60,11 @@ app.use('/api', habitRecordRouter);
 app.use('/api', notificationRouter);
 
 
-
+seedTags()
 
 export const start = () => {
   return server.listen(port, () => {
     console.log(`BeDoHave api listening on http://localhost:${port}/api`)
+
   })
 }
