@@ -16,7 +16,6 @@ export const userLikesTheme = async (session, userId, themeId) => {
       }
     );
 
-    // TODO check for errors
     return
   })
 }
@@ -35,7 +34,6 @@ export const deleteUserLikesTheme = async (session, userId, themeId) => {
       }
     );
 
-    // TODO check for errors
     return
   })
 }
@@ -55,7 +53,6 @@ export const userLikesEssay = async (session, userId, essayId) => {
       }
     );
 
-    // TODO check for errors
     return
   })
 }
@@ -74,7 +71,6 @@ export const deleteUserLikesEssay = async (session, userId, essayId) => {
       }
     );
 
-    // TODO check for errors
     return
   })
 }

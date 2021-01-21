@@ -15,9 +15,6 @@ const getHabits = async (req, res) => {
 const getHabit = async (req, res) => {
 
   const habitId = req.params.habitId
-  // TODO do authorization in other way
-  // const usersHabit = await habitRepository.userOwnsHabit(getSession(req), req.user.id, habitId)
-  // if (!usersHabit) respondError(res, null, 401)
 
   const habit = await habitRepository.getHabit(getSession(req), habitId)
   switch (habit.frequency) {
@@ -51,9 +48,6 @@ const postHabit = async (req, res) => {
 
 const putHabit = async (req, res) => {
 
-  // TODO do authorization in other way
-  // const usersEssay = await essayRepository.userOwnsEssay(getSession(req), req.user.id, essayId)
-  // if (!usersEssay) respondError(res, null, 401)
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     respondError(res, errors.array(), 400)
@@ -67,9 +61,6 @@ const putHabit = async (req, res) => {
 const deleteHabit = async (req, res) => {
 
   const habitId = req.params.habitId
-  // TODO do auth in other way
-  // const usersEssay = await essayRepository.userOwnsEssay(getSession(req), req.user.id, essayId)
-  // if (!usersEssay) respondError(res, null, 401)
 
   const habit = await habitRepository.deleteHabit(getSession(req), habitId);
   return respondSuccess(res, null, 204)

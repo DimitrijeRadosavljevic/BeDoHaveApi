@@ -67,10 +67,6 @@ export const postEssay = async (session, userId, themeId, essay) => {
       }
     )
 
-    if (result.records.length == 0) {
-      // TODO handle error
-    }
-
     const essayResult = result.records[0].get('essay')
 
     const themeRelationship = await txc.run(
@@ -84,10 +80,6 @@ export const postEssay = async (session, userId, themeId, essay) => {
       }
     );
 
-    if (themeRelationship.records.length == 0) {
-      // TODO handle error
-    }
-
     const userRelationship = await txc.run(
       'MATCH (user:User), (essay:Essay) ' +
       'where ID(user)=$userId and ID(essay)=$essayId ' +
@@ -98,10 +90,6 @@ export const postEssay = async (session, userId, themeId, essay) => {
         essayId: (essayResult.identity)
       }
     );
-
-    if (userRelationship.records.length == 0) {
-      // TODO handle error
-    }
 
     return {...essayResult.properties, id: essayResult.identity.toString()}
   });
@@ -123,10 +111,6 @@ export const putEssay = async (session, essay) => {
       }
     );
 
-    if (result.records.length == 0) {
-      // TODO (handle error)
-    }
-
     const essayUpdated = result.records[0].get('essay')
     return {...essayUpdated.properties, id: essayUpdated.identity.toString()}
   });
@@ -144,8 +128,6 @@ export const deleteEssay = async (session, essayId) => {
         essayId: neo4j.int(essayId)
       }
     );
-    
-    // TODO (check result object when deleting node)
   });
 }
 
@@ -283,7 +265,6 @@ export const getTheme = (session, essayId) => {
       }
     )
 
-    console.log(result.records[0].get('theme'))
     const theme = result.records[0].get('theme')
     return {
       ...theme.properties,
