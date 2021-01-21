@@ -13,6 +13,7 @@ import cors from 'cors'
 import { notificationRouter } from './resources/notification/notification.router'
 import { subscribeOnTheme } from './resources/notificationSystem/notificationRedis'
 import { createClient } from './utils/db'
+import { seedTags } from "./utils/tag.seeder";
 
 const port = 3000;
 
@@ -63,8 +64,11 @@ app.use('/api', notificationRouter);
 const justObject = { ime: "ime", prezime: "prezime" };
 subscribeOnTheme(createClient(justObject));
 
+seedTags()
+
 export const start = () => {
   return server.listen(port, () => {
     console.log(`BeDoHave api listening on http://localhost:${port}/api`)
+
   })
 }
