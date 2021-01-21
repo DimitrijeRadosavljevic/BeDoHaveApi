@@ -29,7 +29,7 @@ export const subscribeOnTheme = (client) => {
 
     const list = 'theme:'+ message;
     const messageParts = message.split(":");
-    const client2 = createClient({ime: "ime", prezime:"prezime"})
+    const client2 = createClient({purpose: "ForCreatingClientRedis"})
     client2.smembers(messageParts[0], (err, subscribers) => { //ThemeId ce da bude naziv liste za temu;
       if(err) console.log(err);
 

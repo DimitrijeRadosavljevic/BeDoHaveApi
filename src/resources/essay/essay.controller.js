@@ -55,7 +55,7 @@ const postEssay = async (req, res) => {
     return respondError(res, "Theme is now private", 400);
   } 
   if(themeOwner.id != req.user.id) {
-    notificationSystem.publishOnChanel(createClient(req), themeOwner.id, `User:${req.user.email} write on your theme ${theme.title}`);
+    notificationSystem.publishOnChanel(createClient(req), themeOwner.id, `User:${req.user.email} wrote on your theme ${theme.title}`);
   }
   if(theme.public == true) {
     notificationSystem.publishOnTheme(createClient(req), theme);

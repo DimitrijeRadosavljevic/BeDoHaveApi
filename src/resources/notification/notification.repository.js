@@ -116,7 +116,6 @@ export const deleteNotification = async (session, userId, notificationId) => {
       return null
     }
 
-    console.log("Obrisana notifikacija"+ notificationId);
     const id = result.records[0].get('notification').identity.toString();
     return { id }
   })

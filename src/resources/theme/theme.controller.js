@@ -92,8 +92,7 @@ export const putTheme = async (req, res) => {
     req.body.tags.forEach(tag => {
         tagNames += tag.name;
     });
-    console.log(tagNames);
-    console.log(JSON.stringify(themeFromDatabase));
+
     await themeRepository.removeThemeFromRandomChoice(createClient(req), themeFromDatabase);
     const theme = await themeRepository.putTheme(getSession(req), req.user.id, req.params.themeId, req.body, tagNames)
     if(theme != null)
@@ -123,7 +122,7 @@ export const getThemesPaginate = async (req, res) => {
 }
 
 export const getThemePublic = async (req, res) => {
-    // TODO check if theme is public
+    
     const themeId = req.params.themeId
     const theme = await themeRepository.getThemeDetail(getSession(req), themeId)
     theme.likersCount = await themeRepository.getLikersCount(getSession(req), themeId)
@@ -152,16 +151,14 @@ export const publishTheme = async (req, res) => {
     if(!userTheme) return respondError(res, "Unauthorized", 401);
 
     const theme = await themeRepository.publishTheme(getSession(req), req.user.id, req.body);
-    console.log(theme);
+
     if(theme != null) {
         if(theme.public == true) {
             await themeRepository.addThemeForRandomChoice(createClient(req), theme);
-            console.log("Tema dodata", theme.public);
         } else {
             let themeForDelete = theme;
             themeForDelete.public = true;
             await themeRepository.removeThemeFromRandomChoice(createClient(req), themeForDelete);
-            console.log("Tema izbrisana", theme.public);
         }
         return respondSuccess(res, theme, 200);
     } else {
@@ -185,7 +182,7 @@ export const getPublicThemes = async (req, res) => {
 }
 
 export const updateThemeScheduleAnswer = async (req, res) => {
-    console.log("Tema");
+
     const theme = await themeRepository.updateThemeScheduleAnswer(getSession(req), req.user.id, req.params.themeId, req.body.scheduleAnswer);
     if(theme != null)
         return respondSuccess(res, theme, 201);
@@ -197,7 +194,6 @@ export const getPublicThemesRedis = async (req, res, next) => {
 
     const publicThemes = await themeRepository.getPublicThemesRedis(createClient(req), parseInt(req.query.perPage), parseInt(req.query.page));
     if(publicThemes.themes.length != 0) {
-        console.log(publicThemes, "Redis");
         return respondSuccess(res, publicThemes, 200)
     } else {
         next();
@@ -218,14 +214,12 @@ export const getPersonalizedThemes = async (req, res) => {
 export const getRandomTheme = async (req, res) => {
 
     const randomTheme = await themeRepository.getRandomTheme(createClient(req));
-    console.log(randomTheme);
     return respondSuccess(res, randomTheme, 200);
 }
 
 export const getNumberOfRandomThemes = async (req, res) => {
 
     const numberOfRandomThemes = await themeRepository.getNumberOfRandomThemes(createClient(req));
-    console.log(numberOfRandomThemes);
     return respondSuccess(res, numberOfRandomThemes, 200);
 }
 
@@ -286,10 +280,9 @@ export const checkSubscriptionOnThemeRedis  = async (req, res) => {
 
     const themeId = req.query.themeId;
     const client = createClient(req);
-    client.sismember(themeId, /*req.user.id*/27 + 'Notification', (err, response) => {
+    client.sismember(themeId, 27 + 'Notification', (err, response) => {
         if(err) console.log(err);
 
-        console.log(response);
         return respondSuccess(res, "Notifications deleted" , 200);
     })
 }

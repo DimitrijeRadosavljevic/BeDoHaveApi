@@ -61,7 +61,7 @@ app.use('/api', habitRouter);
 app.use('/api', habitRecordRouter);
 app.use('/api', notificationRouter);
 
-const justObject = { ime: "ime", prezime: "prezime" };
+const justObject = { purpose: "ForCreatinClientRedis"};
 subscribeOnTheme(createClient(justObject));
 
 seedTags()

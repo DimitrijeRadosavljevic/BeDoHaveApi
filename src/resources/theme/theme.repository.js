@@ -6,7 +6,7 @@ import { Theme } from "./theme.model"
 
 
 exports.getThemes = async (session, id) => {
-    console.log(id);
+  
         return session.readTransaction( async txc => {
         const result = await txc.run(
             `MATCH (p:User)-[:${USER_THEME}]->(c:Theme) where ID(p) = $id RETURN c,ID(c)`,
@@ -56,7 +56,7 @@ exports.getTheme = async (session, userId, themeId, tags) => {
 }
 
 exports.postTheme = async (session, theme, userId) => {
-    //console.log(theme);
+  
     return session.writeTransaction( async txc => {
         const result = await txc.run(
           'WITH split($scheduleAnswer, "-") as dateParts CREATE (theme:Theme {title: $title, description: $description, date: $date, reminder: $reminder, scheduleAnswer: date({year: toInteger(dateParts[0]), month: toInteger(dateParts[1]), day: toInteger(dateParts[2])}), public: $public}) RETURN theme',
@@ -69,7 +69,7 @@ exports.postTheme = async (session, theme, userId) => {
                 public: false
             }
         )
-            console.log("proslo");
+
         if (result.records.length == 0) {
           return null;
         }
@@ -207,8 +207,7 @@ export const getThemesPaginate = async (session, userId, perPage, page, title, t
   
   return session.readTransaction(async txc => {
     if(!tags) {
-      console.log(tags);
-      console.log(title);
+
         const result = await txc.run(
         (filterDate ? 'WITH split($filterDate, "-") as dateParts ' : '') + `MATCH (user:User)-[:${USER_THEME}]->(theme:Theme) ` +
         'WHERE ID(user) = $userId ' +
@@ -239,8 +238,7 @@ export const getThemesPaginate = async (session, userId, perPage, page, title, t
       const total = parseInt(result.records[0].get('total').toString())
       return { themes, total}
     } else {
-      console.log(tags);
-      console.log(title);
+    
         const result = await txc.run(
         (filterDate ? 'WITH split($filterDate, "-") as dateParts ' : '') +`MATCH (user:User)-[:${USER_THEME}]->(theme:Theme)-[:${THEME_TAG}]->(tag:Tag) ` +
         'WHERE ID(user) = $userId ' +
@@ -268,7 +266,6 @@ export const getThemesPaginate = async (session, userId, perPage, page, title, t
 
       const themes = result.records.map(record => {
         const theme = record.get('theme')
-        console.log(theme.properties.date);
         return {...theme.properties, id: theme.identity.toString(), scheduleAnswer: theme.properties.scheduleAnswer.year.toString()+"-"+theme.properties.scheduleAnswer.month.toString()+"-"+theme.properties.scheduleAnswer.day.toString()} 
       })
       const total = parseInt(result.records[0].get('total').toString())
@@ -358,7 +355,7 @@ export const getLikersCount = (session, themeId) => {
 }
 
 export const getOverdueThemes = async (session, userId, currentDate) => {
-  console.log(currentDate, userId);
+
   return session.readTransaction(async txc => {
     const overdueThemes = await txc.run(
       `WITH split($currentDate, "-") as dateParts MATCH (user:User)-[:${USER_THEME}]->(theme:Theme) WHERE ID(user)= $userId and theme.reminder <> "never" and theme.scheduleAnswer < date({year: toInteger(dateParts[0]), month: toInteger(dateParts[1]), day: toInteger(dateParts[2])}) RETURN  theme`,
@@ -429,8 +426,7 @@ export const publishTheme = async (session, userId, theme) => {
 export const getPublicThemes = async (session, perPage, page, title, tags) => {
   return session.readTransaction(async txc => {
     if(!tags) {
-      console.log(tags);
-      console.log(title);
+      
         const result = await txc.run(
         `MATCH (user:User)-[:${USER_THEME}]->(theme:Theme) ` +
         'WHERE theme.public = $publish '+
@@ -459,8 +455,7 @@ export const getPublicThemes = async (session, perPage, page, title, tags) => {
       const total = parseInt(result.records[0].get('total').toString())
       return { themes, total}
     } else {
-      console.log(tags);
-      console.log(title);
+     
         const result = await txc.run(
         `MATCH (user:User)-[:${USER_THEME}]->(theme:Theme)-[:${THEME_TAG}]->(tag:Tag) ` +
         'WHERE theme.public = $publish ' +
@@ -486,7 +481,6 @@ export const getPublicThemes = async (session, perPage, page, title, tags) => {
 
       const themes = result.records.map(record => {
         const theme = record.get('theme')
-        console.log(theme.properties.date);
         return {...theme.properties, id: theme.identity.toString(), scheduleAnswer: theme.properties.scheduleAnswer.year.toString()+"-"+theme.properties.scheduleAnswer.month.toString()+"-"+theme.properties.scheduleAnswer.day.toString()} 
       })
       const total = parseInt(result.records[0].get('total').toString())
@@ -695,7 +689,6 @@ export const getNumberOfRandomThemes = async (client) => {
   return new Promise((resolve, reject) => {
     client.scard('randomThemes', (err, numberOfThemes) => {
       if(err) return reject(err);
-      console.log("Broj tema", numberOfThemes);
       return resolve(numberOfThemes);
     })
   })
