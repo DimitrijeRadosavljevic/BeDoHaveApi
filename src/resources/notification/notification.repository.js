@@ -3,7 +3,8 @@ import { USER_NOTIFICATION, neo4j} from "../../utils/db";
 
 export const postNotification = async (session, userId, content) => {
     let date = new Date();
-    let currentDate = date.getFullYear() + "-" + date.getMonth() + "-" + date.getDate();
+    let month = date.getMonth()+1;
+    let currentDate = date.getFullYear() + "-" + month + "-" + date.getDate();
     return session.writeTransaction(async txc => {
           const result = await txc.run(
             `CREATE (notification:Notification {content: $content, seen: $seen, date: $date}) RETURN notification`,
