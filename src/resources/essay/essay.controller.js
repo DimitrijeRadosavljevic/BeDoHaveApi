@@ -53,6 +53,9 @@ const postEssay = async (req, res) => {
   if(themeOwner.id != req.user.id) {
     notificationSystem.publishOnChanel(createClient(req), themeOwner.id, `User:${req.user.email} write on your theme ${theme.title}`);
   }
+  if(theme.public == true) {
+    notificationSystem.publishOnTheme(createClient(req), theme);
+  }
   let essay = new Essay(null, req.body.title, req.body.content, req.body.date);
   essay = await essayRepository.postEssay(getSession(req), req.user.id, themeId, essay)
   return respondSuccess(res, essay, 201)

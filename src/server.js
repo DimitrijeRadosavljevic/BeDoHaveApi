@@ -11,6 +11,8 @@ import { habitRecordRouter } from "./resources/habit-record/habit-record.router"
 import authRouter from "./utils/auth/auth.router"
 import cors from 'cors'
 import { notificationRouter } from './resources/notification/notification.router'
+import { subscribeOnTheme } from './resources/notificationSystem/notificationRedis'
+import { createClient } from './utils/db'
 import { seedTags } from "./utils/tag.seeder";
 
 const port = 3000;
@@ -59,6 +61,8 @@ app.use('/api', habitRouter);
 app.use('/api', habitRecordRouter);
 app.use('/api', notificationRouter);
 
+const justObject = { ime: "ime", prezime: "prezime" };
+subscribeOnTheme(createClient(justObject));
 
 seedTags()
 

@@ -322,6 +322,26 @@ export const getThemeDetail = async (session, themeId) => {
   })
 }
 
+export const getThemeForSpecificUpdate = async (session, themeId) => {
+  return session.readTransaction(async txc => {
+    const result = await txc.run(
+      `MATCH (theme:Theme) where ID(theme)= $themeId RETURN theme`,
+      {
+        themeId: neo4j.int(themeId)
+      }
+    )
+
+   if(result.records.length == 0) {
+    return null;
+   }
+
+   const theme = result.records[0].get('theme');
+   const id = theme.identity.toString();
+
+   return { ...theme.properties, id: id }
+  })
+}
+
 export const getLikersCount = (session, themeId) => {
   return session.readTransaction(async txc => {
     const likersResult = await txc.run(
@@ -373,7 +393,7 @@ export const publishTheme = async (session, userId, theme) => {
 
       const themeFromDatabase = response.records[0].get('theme');
       const id = themeFromDatabase.identity.toString();
-      return { ...themeFromDatabase.properties, id: id }
+      return { ...themeFromDatabase.properties, id: id,  scheduleAnswer: ''}
     })
   } else {
     return session.writeTransaction(async txc => {
@@ -401,7 +421,7 @@ export const publishTheme = async (session, userId, theme) => {
 
       const themeFromDatabase = response.records[0].get('theme');
       const id = themeFromDatabase.identity.toString();
-      return { ...themeFromDatabase.properties, id: id } 
+      return { ...themeFromDatabase.properties, id: id, scheduleAnswer: '' } 
     })
   }
 }
@@ -433,8 +453,8 @@ export const getPublicThemes = async (session, perPage, page, title, tags) => {
       }
 
       const themes = result.records.map(record => {
-        const theme = record.get('theme')
-        return {...theme.properties, id: theme.identity.toString(), scheduleAnswer: theme.properties.scheduleAnswer.year.toString()+"-"+theme.properties.scheduleAnswer.month.toString()+"-"+theme.properties.scheduleAnswer.day.toString()}
+        const theme = record.get('theme');
+        return {...theme.properties, id: theme.identity.toString(), scheduleAnswer: theme.properties.scheduleAnswer.year.toString()+"-"+theme.properties.scheduleAnswer.month.toString()+"-"+theme.properties.scheduleAnswer.day.toString(), tags: tags }
       })
       const total = parseInt(result.records[0].get('total').toString())
       return { themes, total}
@@ -557,7 +577,7 @@ export const themeExist = async (session, themeId) => {
         }
 
         const theme = result.records[0].get('theme');
-        return { ...theme.properties, id: theme.identity.toString() }
+        return { ...theme.properties, id: theme.identity.toString(), scheduleAnswer: '' }
   })
 }
 
@@ -621,6 +641,63 @@ export const getPersonalizedThemes = async (session, tags, page, perPage) => {
 
     const total = parseInt(result.records[0].get('total').toString())
     return { themes, total}
+  })
+}
+
+export const addThemeForRandomChoice = async (client, theme) => {
+
+  client.scard('randomThemes',(numberError, numberData) => {
+    if(numberData == 50) {
+
+     client.spop('randomThemes', (removeError, removeData) => {
+       if(removeError) console.log("Error ocured:", removeError);
+
+       client.sadd('randomThemes', JSON.stringify(theme), (addError, addData) => {
+         if(addError) console.log("Error ocured", addError);
+       })
+
+     })
+    } else {
+
+      client.sadd('randomThemes', JSON.stringify(theme), (err, response)=> {
+        if(err) console.log("Error ocured:", err);
+      });
+
+    }
+  })
+}
+
+export const removeThemeFromRandomChoice = async (client, theme) => {
+
+  client.scard('randomThemes',(numberError, numberData) => {
+      if(numberData > 0) {
+        client.srem('randomThemes', JSON.stringify(theme), (err, response) => {
+          if(err) console.log("Error ocured:", err);
+        })
+      }
+    }
+  )
+}
+
+export const getRandomTheme = async (client) => {
+
+  return new Promise((resolve, reject) => {
+    client.srandmember('randomThemes', (err, theme) => {
+      if(err) return reject(err);
+
+      return resolve(JSON.parse(theme));
+    })
+  })
+}
+
+export const getNumberOfRandomThemes = async (client) => {
+
+  return new Promise((resolve, reject) => {
+    client.scard('randomThemes', (err, numberOfThemes) => {
+      if(err) return reject(err);
+      console.log("Broj tema", numberOfThemes);
+      return resolve(numberOfThemes);
+    })
   })
 }
 
