@@ -93,16 +93,8 @@ export const postHabit = async (session, userId, habit) => {
         frequency: habit.frequency,
         frequencySpecific: habit.frequencySpecific,
         date: habit.date
-          // new neo4j.types.Date(
-          // parseInt(date.format(habit.date, 'YYYY')),
-          // parseInt(date.format(habit.date, 'MM')),
-          // parseInt(date.format(habit.date, 'DD')))
       }
     )
-
-    if (result.records.length == 0) {
-      // TODO handle error
-    }
 
     const habitResult = result.records[0].get('habit')
 
@@ -116,10 +108,6 @@ export const postHabit = async (session, userId, habit) => {
         habitId: (habitResult.identity)
       }
     );
-
-    if (habitRelationship.records.length == 0) {
-      // TODO handle error
-    }
 
     habit.tags.map(async tag => {
       const relationship = await txc.run(
@@ -163,10 +151,6 @@ export const putHabit = async (session, habit) => {
         date: habit.date
       }
     );
-
-    if (habitResult.records.length == 0) {
-      // TODO (handle error)
-    }
 
     const r = await txc.run(
       `MATCH (habit:Habit)-[relationship:${HABIT_TAG}]->(:Tag) ` +
@@ -221,9 +205,6 @@ export const deleteHabit = async (session, habitId) => {
         habitId: neo4j.int(habitId)
       }
     );
-
-    console.log(result)
-    // TODO (check result object when deleting node)
   });
 }
 

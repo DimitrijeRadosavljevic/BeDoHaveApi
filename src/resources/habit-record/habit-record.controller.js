@@ -25,8 +25,6 @@ const postHabitRecord = async (req, res) => {
 
 const putHabitRecord = async (req, res) => {
 
-  // const usersEssay = await essayRepository.userOwnsEssay(getSession(req), req.user.id, essayId)
-  // if (!usersEssay) respondError(res, null, 401)
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     respondError(res, errors.array(), 400)
@@ -40,9 +38,6 @@ const putHabitRecord = async (req, res) => {
 const deleteHabitRecord = async (req, res) => {
 
   const habitRecordId = req.params.habitRecordId
-  // TODO do auth in other way
-  // const usersEssay = await essayRepository.userOwnsEssay(getSession(req), req.user.id, essayId)
-  // if (!usersEssay) respondError(res, null, 401)
 
   const result = await habitRecordRepository.deleteHabitRecord(getSession(req), habitRecordId);
   return respondSuccess(res, null, 204)

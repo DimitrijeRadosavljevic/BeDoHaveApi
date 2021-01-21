@@ -18,7 +18,6 @@ const getEssays = async (req, res) => {
   if (!usersTheme) respondError(res, null, 401)
 
   const result = await essayRepository.getEssays(getSession(req), req.params.themeId, req.params.perPage || 10, req.params.page || 1);
-  // const result = await essayRepository.getEssaysWithUser(getSession(req), req.params.themeId, req.params.perPage || 10, req.params.page || 1, req.user.id);
   return respondSuccess(res, result, 200)
 }
 
@@ -46,9 +45,6 @@ const postEssay = async (req, res) => {
   if(theme == null) {
      return respondError(res, "Theme not exist", 404);
   }
-
-  //const usersTheme = await userOwnsTheme(getSession(req), req.user.id, themeId)
-  //if (!usersTheme) respondError(res, null, 401)
 
   const themeOwner = await themeRepository.themeOwner(getSession(req), themeId);
   if(themeOwner.id != req.user.id && theme.public == false) {
@@ -91,9 +87,6 @@ const deleteEssay = async (req, res) => {
 const getEssayDetail = async (req, res) => {
 
   const essayId = req.params.essayId
-
-  // TODO IF theme is public
-  // const theme = await essayRepository.getTheme(getSession(req), essayId)
 
   const essay = await essayRepository.getEssayDetail(getSession(req), essayId);
   essay.likersCount = await essayRepository.getEssayLikersCount(getSession(req), essayId);

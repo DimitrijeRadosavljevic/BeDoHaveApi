@@ -1,5 +1,4 @@
 import {HABIT_COMPLETED, neo4j } from "../../utils/db";
-import {session} from "neo4j-driver";
 
 
 export const getHabitRecords = async (session, habitId, perPage, page) => {
@@ -52,10 +51,6 @@ export const postHabitRecord = async (session, habitId, habitRecord) => {
       }
     )
 
-    if (result.records.length == 0) {
-      // TODO handle error
-    }
-
     const habitRecordResult = result.records[0].get('habitRecord')
 
     const habitRecordRelationship = await txc.run(
@@ -68,10 +63,6 @@ export const postHabitRecord = async (session, habitId, habitRecord) => {
         habitRecordId: (habitRecordResult.identity)
       }
     );
-
-    if (habitRecordRelationship.records.length == 0) {
-      // TODO handle error
-    }
 
     return {
       id: habitRecordResult.identity.toString(),
@@ -97,10 +88,6 @@ export const putHabitRecord = async (session, habitRecord) => {
       }
     );
 
-    if (habitRecordResult.records.length == 0) {
-      // TODO (handle error)
-    }
-
     const habitRecordUpdated = habitRecordResult.records[0].get('habitRecord')
     return {
       id: habitRecordUpdated.identity.toString(),
@@ -122,9 +109,6 @@ export const deleteHabitRecord = async (session, habitRecordId) => {
         habitRecordId: neo4j.int(habitRecordId)
       }
     );
-
-    console.log(result)
-    // TODO (check result object when deleting node)
   });
 }
 
